@@ -216,6 +216,9 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 .lesson-surface { width: 100%; }
 
 .lesson-frame { display: block; width: 100%; height: 100%; min-height: 0; margin: 0; overflow: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+.lesson-quiz-fab { position: fixed; z-index: 12; top: 28px; right: calc(var(--right-panel-width) + 28px); display: inline-flex; align-items: center; gap: 8px; padding: 11px 15px; border: 1px solid color-mix(in srgb,var(--accent) 72%,black); border-radius: 999px; background: var(--accent); box-shadow: 0 10px 28px rgba(0,0,0,.2); color: #211609; cursor: pointer; font-size: 11px; font-weight: 800; }
+.lesson-quiz-fab:hover { transform: translateY(-1px); box-shadow: 0 13px 32px rgba(0,0,0,.24); }
+.right-collapsed .lesson-quiz-fab { right: 28px; }
 
 .quiz-section { width: min(100%, 900px); margin: 88px auto 0; }
 .quiz-only { margin-top: 0; }
@@ -279,6 +282,7 @@ textarea { width: 100%; resize: vertical; padding: 15px; border: 1px solid var(-
   .workspace, .app-shell:not(.right-collapsed) .workspace, .left-collapsed:not(.right-collapsed) .workspace { width: 100%; margin-left: 0; margin-right: 0; padding: 58px 8px 70px; }
   .workspace.lesson-mode, .app-shell:not(.right-collapsed) .workspace.lesson-mode, .left-collapsed:not(.right-collapsed) .workspace.lesson-mode { height: 100dvh; padding: 8px; }
   .lesson-frame { border-radius: 14px; }
+  .lesson-quiz-fab, .right-collapsed .lesson-quiz-fab { top: 18px; right: 18px; }
 }
 
 @media (max-width: 560px) {

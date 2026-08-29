@@ -867,6 +867,13 @@ export default function App() {
       <main className={`workspace ${phase === "lesson" ? "lesson-mode" : ""}`} id="top">
         {phase === "lesson" ? (
           <section className="lesson-surface">
+            <button
+              className="lesson-quiz-fab"
+              type="button"
+              onClick={() => navigate(lessonId, "quiz")}
+            >
+              Take the quiz <span aria-hidden="true">→</span>
+            </button>
             <iframe
               className="lesson-frame"
               key={`${lessonId}-${theme}-${lessonContentRevision}`}
