@@ -124,7 +124,7 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 .section-focus-meta .passed { color: var(--teal); }
 .phase-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 20px; padding: 5px; border-radius: 14px; background: var(--surface-soft); }
 .phase-switcher button { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; padding: 12px 10px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; text-align: left; }
-.phase-switcher button span { font-size: 10px; font-weight: 800; }
+.phase-switcher .material-icon { width: 18px; height: 18px; fill: currentColor; }
 .phase-switcher button strong { font-size: 13px; }
 .phase-switcher button.active { border-color: var(--line); background: var(--surface-raised); color: var(--ink); box-shadow: 0 4px 14px rgba(0,0,0,.07); }
 .section-primary-action { width: 100%; margin-top: 12px; padding-block: 14px; border-radius: 14px; font-size: 13px; }

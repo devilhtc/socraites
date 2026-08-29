@@ -807,15 +807,18 @@ export default function App() {
                   </div>
                   <div className="phase-switcher" aria-label="Lesson or quiz">
                     <button className={phase === "lesson" ? "active" : ""} type="button" onClick={() => navigate(lesson.id, "lesson")}>
-                      <span>01</span><strong>Lesson</strong>
+                      <svg className="material-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 21q-1.625-1.475-3.7-2.237Q6.225 18 4 18q-.525 0-.888-.363-.362-.362-.362-.887V5.1q0-.4.25-.725t.65-.4q2.175-.425 4.263.213Q9.75 4.825 12 6.5q2.25-1.675 4.338-2.312Q18.425 3.55 20.6 3.975q.4.075.65.4t.25.725v11.65q0 .525-.363.888Q20.775 18 20.25 18q-2.225 0-4.3.763Q13.875 19.525 12 21Zm1-3q1.525-.95 3.138-1.425Q17.75 16.1 19.5 16.05V5.825q-1.6-.2-3.3.413Q14.5 6.85 13 8v10Zm-2 0V8Q9.5 6.85 7.8 6.238 6.1 5.625 4.5 5.825V16.05q1.75.05 3.363.525Q9.475 17.05 11 18Z" />
+                      </svg>
+                      <strong>Lesson</strong>
                     </button>
                     <button className={phase === "quiz" ? "active" : ""} type="button" onClick={() => navigate(lesson.id, "quiz")}>
-                      <span>02</span><strong>Quiz</strong>
+                      <svg className="material-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M7 18h2v-2H7v2Zm0-4h2q0-1.1.2-1.475.2-.375 1.1-1.025.95-.7 1.325-1.35Q12 9.5 12 8.75q0-1.55-.975-2.65Q10.05 5 8.5 5 7.1 5 6.125 5.9 5.15 6.8 5.05 8.2h2q.1-.575.5-.888Q7.95 7 8.5 7q.65 0 1.075.488Q10 7.975 10 8.65q0 .425-.25.8t-.8.8q-1.25.9-1.6 1.625Q7 12.6 7 14Zm-2 8q-.825 0-1.413-.588Q3 20.825 3 20V4q0-.825.587-1.413Q4.175 2 5 2h14q.825 0 1.413.587Q21 3.175 21 4v16q0 .825-.587 1.412Q19.825 22 19 22H5Zm0-2h14V4H5v16Z" />
+                      </svg>
+                      <strong>Quiz</strong>
                     </button>
                   </div>
-                  {phase === "lesson" && !progress?.passed && (
-                    <button className="primary-button section-primary-action" type="button" onClick={() => navigate(lesson.id, "quiz")}>Take the quiz →</button>
-                  )}
                   {progress?.passed && nextSectionId && (
                     <button className="primary-button section-primary-action" type="button" onClick={() => navigate(nextSectionId, "lesson")}>Next section →</button>
                   )}
