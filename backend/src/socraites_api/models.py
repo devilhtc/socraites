@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from enum import StrEnum
 from typing import Annotated, Literal
@@ -67,6 +68,36 @@ class OrderingQuestion(QuestionBase):
     correct_order: list[str] = Field(min_length=2)
 
 
+class FillParagraphBlank(StrictModel):
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]*$")
+    options: list[ChoiceOption] = Field(min_length=2, max_length=8)
+    correct_option_id: str
+
+    @model_validator(mode="after")
+    def valid_answer(self) -> "FillParagraphBlank":
+        option_ids = [option.id for option in self.options]
+        if len(option_ids) != len(set(option_ids)):
+            raise ValueError("fill paragraph option ids must be unique within a blank")
+        if self.correct_option_id not in option_ids:
+            raise ValueError("fill paragraph answer must match one of the blank options")
+        return self
+
+
+class FillParagraphQuestion(QuestionBase):
+    type: Literal["fill_paragraph"]
+    blanks: list[FillParagraphBlank] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode="after")
+    def valid_placeholders(self) -> "FillParagraphQuestion":
+        blank_ids = [blank.id for blank in self.blanks]
+        if len(blank_ids) != len(set(blank_ids)):
+            raise ValueError("fill paragraph blank ids must be unique")
+        placeholders = re.findall(r"\{\{([a-z0-9][a-z0-9-]*)\}\}", self.prompt)
+        if sorted(placeholders) != sorted(blank_ids):
+            raise ValueError("fill paragraph prompt must contain each named blank exactly once")
+        return self
+
+
 class FreeResponseQuestion(QuestionBase):
     type: Literal["free_response"]
     rubric: str = Field(min_length=1, max_length=4000)
@@ -77,6 +108,7 @@ Question = Annotated[
     SingleChoiceQuestion
     | MultipleChoiceQuestion
     | OrderingQuestion
+    | FillParagraphQuestion
     | FreeResponseQuestion,
     Field(discriminator="type"),
 ]
@@ -90,12 +122,18 @@ class Quiz(StrictModel):
     questions: list[Question] = Field(min_length=1)
 
 
+class PublicFillParagraphBlank(StrictModel):
+    id: str
+    options: list[ChoiceOption]
+
+
 class PublicQuestion(StrictModel):
     id: str
-    type: Literal["single_choice", "multiple_choice", "ordering", "free_response"]
+    type: Literal["single_choice", "multiple_choice", "ordering", "fill_paragraph", "free_response"]
     prompt: str
     points: float
     options: list[ChoiceOption] | None = None
+    blanks: list[PublicFillParagraphBlank] | None = None
 
 
 class PublicQuiz(StrictModel):

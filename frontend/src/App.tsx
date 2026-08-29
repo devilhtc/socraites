@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 import { api } from "./api";
 import type {
   AttemptResult,
@@ -80,6 +81,140 @@ function writeDraftCache(courseId: string, lessonId: string, answers: Record<str
   } catch {
     // The server remains authoritative; this cache only closes the debounce window on refresh.
   }
+}
+
+function FillParagraphInput({
+  question,
+  value,
+  disabled,
+  onChange,
+}: {
+  question: PublicQuestion;
+  value: unknown;
+  disabled: boolean;
+  onChange: (value: unknown) => void;
+}) {
+  const [activeBlank, setActiveBlank] = useState<string | null>(null);
+  const [closingBlank, setClosingBlank] = useState<string | null>(null);
+  const closingBlankRef = useRef<string | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selections = value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, string>)
+    : {};
+  const blanks = new Map((question.blanks ?? []).map((blank) => [blank.id, blank]));
+
+  function cancelTimers() {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    if (fadeTimer.current !== null) {
+      clearTimeout(fadeTimer.current);
+      fadeTimer.current = null;
+    }
+  }
+
+  function openBlank(blankId: string) {
+    if (disabled) return;
+    cancelTimers();
+    closingBlankRef.current = null;
+    setClosingBlank(null);
+    setActiveBlank(blankId);
+  }
+
+  function beginClose(blankId: string) {
+    cancelTimers();
+    closingBlankRef.current = blankId;
+    setActiveBlank(null);
+    setClosingBlank(blankId);
+    fadeTimer.current = setTimeout(() => {
+      if (closingBlankRef.current === blankId) closingBlankRef.current = null;
+      setClosingBlank((current) => current === blankId ? null : current);
+      fadeTimer.current = null;
+    }, 210);
+  }
+
+  function scheduleClose(blankId: string) {
+    if (closingBlankRef.current === blankId) return;
+    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => {
+      closeTimer.current = null;
+      beginClose(blankId);
+    }, 750);
+  }
+
+  useEffect(() => () => cancelTimers(), []);
+
+  const parts: ReactNode[] = [];
+  const placeholder = /\{\{([a-z0-9][a-z0-9-]*)\}\}/g;
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  while ((match = placeholder.exec(question.prompt)) !== null) {
+    if (match.index > cursor) parts.push(question.prompt.slice(cursor, match.index));
+    const blank = blanks.get(match[1]);
+    if (blank) {
+      const selected = blank.options.find((option) => option.id === selections[blank.id]);
+      const isOpen = activeBlank === blank.id;
+      const isClosing = closingBlank === blank.id;
+      const isVisible = isOpen || isClosing;
+      parts.push(
+        <span
+          className={`fill-blank ${isOpen ? "open" : ""} ${isClosing ? "closing" : ""}`}
+          key={`${blank.id}-${match.index}`}
+          onMouseEnter={() => openBlank(blank.id)}
+          onMouseLeave={() => scheduleClose(blank.id)}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) scheduleClose(blank.id);
+          }}
+        >
+          <button
+            type="button"
+            className={`fill-blank-trigger ${selected ? "answered" : ""}`}
+            disabled={disabled}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            aria-label={selected ? `Change ${blank.id}, currently ${selected.label}` : `Fill ${blank.id}`}
+            onFocus={() => openBlank(blank.id)}
+            onClick={() => openBlank(blank.id)}
+          >
+            {selected?.label ?? "Choose"}
+          </button>
+          {isVisible && (
+            <span className="fill-blank-popover" onMouseEnter={() => openBlank(blank.id)} onMouseLeave={() => scheduleClose(blank.id)}>
+              <span className="fill-blank-choice-grid" role="listbox" aria-label={`Choices for ${blank.id}`}>
+                {blank.options.map((option) => (
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected?.id === option.id}
+                    className={selected?.id === option.id ? "selected" : ""}
+                    disabled={disabled}
+                    key={option.id}
+                    onClick={() => {
+                      onChange({...selections, [blank.id]: option.id});
+                      beginClose(blank.id);
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </span>
+            </span>
+          )}
+        </span>,
+      );
+    }
+    cursor = match.index + match[0].length;
+  }
+  if (cursor < question.prompt.length) parts.push(question.prompt.slice(cursor));
+
+  return (
+    <div className="fill-paragraph-wrap">
+      <p className="fill-paragraph">{parts}</p>
+      <p className="field-hint">Hover, focus, or tap a blank to choose an answer.</p>
+    </div>
+  );
 }
 
 function QuestionInput({
@@ -176,6 +311,10 @@ function QuestionInput({
         })}
       </ol>
     );
+  }
+
+  if (question.type === "fill_paragraph") {
+    return <FillParagraphInput question={question} value={value} disabled={disabled} onChange={onChange} />;
   }
 
   return (
@@ -925,7 +1064,7 @@ export default function App() {
                 return (
                   <article className="question-card" key={question.id}>
                     <div className="question-meta"><span>Question {index + 1}</span><span>{question.points} points{quiz && index >= quiz.authored_question_count ? " · Generated practice" : ""}</span></div>
-                    <h3>{question.prompt}</h3>
+                    {question.type !== "fill_paragraph" && <h3>{question.prompt}</h3>}
                     <QuestionInput
                       question={question}
                       value={answers[question.id]}

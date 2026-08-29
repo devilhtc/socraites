@@ -62,6 +62,31 @@
       ],
       "correct_option_ids": ["no"],
       "explanation": "Tool access and conversation ownership are separate concerns."
+    },
+    {
+      "id": "boundary-fill",
+      "type": "fill_paragraph",
+      "prompt": "The {{conversation-layer}} carries learner-facing messages, while the {{tool-layer}} exposes external capabilities.",
+      "points": 2,
+      "blanks": [
+        {
+          "id": "conversation-layer",
+          "options": [
+            {"id": "conversation", "label": "conversation protocol"},
+            {"id": "database", "label": "database driver"}
+          ],
+          "correct_option_id": "conversation"
+        },
+        {
+          "id": "tool-layer",
+          "options": [
+            {"id": "capability", "label": "tool protocol"},
+            {"id": "interface", "label": "conversation interface"}
+          ],
+          "correct_option_id": "capability"
+        }
+      ],
+      "explanation": "The conversation layer carries the learner exchange, while the tool layer exposes capabilities."
     }
   ]
 }

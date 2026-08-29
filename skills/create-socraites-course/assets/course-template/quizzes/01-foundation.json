@@ -62,6 +62,31 @@
       ],
       "correct_option_ids": ["transfer"],
       "explanation": "Explain how the same structure appears in the new context."
+    },
+    {
+      "id": "foundation-paragraph",
+      "type": "fill_paragraph",
+      "prompt": "Replace this sentence so {{first-blank}} and {{second-blank}} test two connected ideas from the lesson.",
+      "points": 3,
+      "blanks": [
+        {
+          "id": "first-blank",
+          "options": [
+            {"id": "first-correct", "label": "the first correct idea"},
+            {"id": "first-distractor", "label": "a plausible distractor"}
+          ],
+          "correct_option_id": "first-correct"
+        },
+        {
+          "id": "second-blank",
+          "options": [
+            {"id": "second-correct", "label": "the connected consequence"},
+            {"id": "second-distractor", "label": "an unrelated consequence"}
+          ],
+          "correct_option_id": "second-correct"
+        }
+      ],
+      "explanation": "Explain how the two selected ideas connect."
     }
   ]
 }

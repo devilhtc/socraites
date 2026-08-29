@@ -151,7 +151,7 @@ Every lesson has one quiz with 5 to 7 questions. Use more than one question type
 Shared fields for every question:
 
 - `id`: unique stable slug within the quiz.
-- `type`: one of `single_choice`, `multiple_choice`, `ordering`, or `free_response`.
+- `type`: one of `single_choice`, `multiple_choice`, `ordering`, `fill_paragraph`, or `free_response`.
 - `prompt`: self-contained learner-facing question.
 - `points`: a positive number, at most 100.
 - `explanation`: what the learner should understand after answering.
@@ -230,6 +230,40 @@ Use 2 to 10 options. `correct_order` must contain every option ID exactly once.
 ```
 
 The rubric should describe concepts and reasoning, not demand exact wording. The reference answer must be complete enough for an LLM judge to compare meaning fairly.
+
+### Fill paragraph
+
+Use `{{blank-id}}` placeholders inside one paragraph. Define a matching blank object for every placeholder. A blank has 2 to 8 choices and exactly one correct option. The learner receives the paragraph and choices, but not `correct_option_id`.
+
+```json
+{
+  "id": "execution-path",
+  "type": "fill_paragraph",
+  "prompt": "A matching {{event}} creates a run, and each {{job}} executes on one runner.",
+  "points": 3,
+  "blanks": [
+    {
+      "id": "event",
+      "options": [
+        {"id": "event-match", "label": "event"},
+        {"id": "step-match", "label": "step"}
+      ],
+      "correct_option_id": "event-match"
+    },
+    {
+      "id": "job",
+      "options": [
+        {"id": "job-unit", "label": "job"},
+        {"id": "workflow-unit", "label": "workflow file"}
+      ],
+      "correct_option_id": "job-unit"
+    }
+  ],
+  "explanation": "Events select workflows, whose jobs are assigned to runners."
+}
+```
+
+Use each placeholder exactly once and keep blank IDs unique. Four concise choices work well because the learner sees them in a two-column grid, but the schema allows more or fewer. A paragraph may contain several blanks; scoring gives equal credit to each blank.
 
 ## Full quiz envelope
 

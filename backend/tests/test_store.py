@@ -20,6 +20,9 @@ def test_course_and_public_quiz_load() -> None:
     assert len(course.lessons) == 1
     assert quiz.questions[0].type == "single_choice"
     assert not hasattr(quiz.questions[0], "correct_option_ids")
+    assert quiz.questions[-1].type == "fill_paragraph"
+    assert quiz.questions[-1].blanks is not None
+    assert not hasattr(quiz.questions[-1].blanks[0], "correct_option_id")
 
     courses = store.list_courses()
     assert {item.title for item in courses} == {"Test Course"}

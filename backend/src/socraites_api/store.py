@@ -21,6 +21,7 @@ from .models import (
     LearnerWorkspace,
     LessonProgress,
     LessonWorkView,
+    PublicFillParagraphBlank,
     PublicQuestion,
     PublicQuiz,
     Question,
@@ -188,6 +189,12 @@ class CourseStore:
         questions = []
         for question in quiz.questions:
             options = getattr(question, "options", None)
+            source_blanks = getattr(question, "blanks", None)
+            blanks = (
+                [PublicFillParagraphBlank(id=blank.id, options=blank.options) for blank in source_blanks]
+                if source_blanks is not None
+                else None
+            )
             questions.append(
                 PublicQuestion(
                     id=question.id,
@@ -195,6 +202,7 @@ class CourseStore:
                     prompt=question.prompt,
                     points=question.points,
                     options=options,
+                    blanks=blanks,
                 )
             )
         return PublicQuiz(

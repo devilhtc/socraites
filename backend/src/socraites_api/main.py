@@ -17,6 +17,7 @@ from .models import (
     AttemptResult,
     CourseView,
     DraftRequest,
+    FillParagraphQuestion,
     JudgeResult,
     JudgeVerdict,
     MultipleChoiceQuestion,
@@ -76,7 +77,7 @@ LESSON_SHELL = """<!doctype html>
     * { box-sizing:border-box; }
     html { height:100%; overflow:hidden; }
     body { height:100%; margin:0; overflow:auto; overscroll-behavior:contain; background:var(--page); color:var(--ink); font:17px/1.7 Inter,ui-sans-serif,system-ui,sans-serif; }
-    article { width:min(100%,920px); margin:0 auto; padding:48px 32px 80px; }
+    article { width:min(100%,920px); margin:0 auto; padding:36px 20px 60px; }
     .eyebrow { margin:0 0 12px; color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
     h1 { max-width:680px; margin:0 0 22px; font:700 clamp(38px,7vw,70px)/.98 Georgia,serif; letter-spacing:-.045em; }
     h2 { margin:54px 0 12px; font:700 30px/1.1 Georgia,serif; letter-spacing:-.025em; }
@@ -411,6 +412,19 @@ def create_app(
                     )
                     score = correct_positions / len(question.correct_order)
                     result = _scored_result(question, score, "local-ordering")
+                elif isinstance(question, FillParagraphQuestion):
+                    selected = (
+                        answer
+                        if isinstance(answer, dict)
+                        and all(isinstance(key, str) and isinstance(value, str) for key, value in answer.items())
+                        else {}
+                    )
+                    correct_blanks = sum(
+                        1 for blank in question.blanks
+                        if selected.get(blank.id) == blank.correct_option_id
+                    )
+                    score = correct_blanks / len(question.blanks)
+                    result = _scored_result(question, score, "local-fill-paragraph")
                 else:
                     text = answer.strip() if isinstance(answer, str) else ""
                     judged: JudgeResult = await judge_service.judge(question, text)

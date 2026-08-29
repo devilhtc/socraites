@@ -23,6 +23,7 @@ from acp.schema import (
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .models import (
+    FillParagraphQuestion,
     FreeResponseQuestion,
     JudgeResult,
     JudgeStatus,
@@ -398,6 +399,14 @@ LEARNER'S NEW MESSAGE:
 
     @staticmethod
     def _validate_question_options(question: Question) -> None:
+        if isinstance(question, FillParagraphQuestion):
+            for blank in question.blanks:
+                option_ids = [option.id for option in blank.options]
+                if len(option_ids) != len(set(option_ids)):
+                    raise JudgeUnavailable("Codex generated duplicate option IDs in a paragraph blank.")
+                if blank.correct_option_id not in option_ids:
+                    raise JudgeUnavailable("Codex generated a paragraph answer that does not match its options.")
+            return
         if not isinstance(question, (SingleChoiceQuestion, MultipleChoiceQuestion, OrderingQuestion)):
             return
         option_ids = [option.id for option in question.options]
@@ -425,6 +434,7 @@ Every question needs: id (lowercase letters, digits, hyphens), type, prompt, poi
 single_choice needs 3-5 options and correct_option_ids with exactly one option ID.
 multiple_choice needs 3-6 options and correct_option_ids containing every correct option ID.
 ordering needs 3-5 options and correct_order containing every option ID exactly once.
+fill_paragraph needs a prompt containing one or more named placeholders such as {{{{runner}}}}, plus a blanks array. Each blank needs a matching id, 2-6 options, and correct_option_id.
 free_response needs rubric and reference_answer.
 Each option is an object with id and label. Use points between 3 and 5. Make distractors plausible, and make explanations teach why the answer is right.
 

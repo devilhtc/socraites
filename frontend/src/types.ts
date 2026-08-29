@@ -51,13 +51,15 @@ export type CourseSummary = {
 };
 
 export type ChoiceOption = { id: string; label: string };
+export type FillParagraphBlank = { id: string; options: ChoiceOption[] };
 
 export type PublicQuestion = {
   id: string;
-  type: "single_choice" | "multiple_choice" | "ordering" | "free_response";
+  type: "single_choice" | "multiple_choice" | "ordering" | "fill_paragraph" | "free_response";
   prompt: string;
   points: number;
   options: ChoiceOption[] | null;
+  blanks?: FillParagraphBlank[] | null;
 };
 
 export type PublicQuiz = {

@@ -33,7 +33,7 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
     assert "script-src 'none'" in response.headers["content-security-policy"]
     assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
     assert "body { height:100%; margin:0; overflow:auto;" in response.text
-    assert "article { width:min(100%,920px); margin:0 auto; padding:48px 32px 80px;" in response.text
+    assert "article { width:min(100%,920px); margin:0 auto; padding:36px 20px 60px;" in response.text
     assert '<figure class="mermaid-diagram"' in response.text
     assert "<svg" in response.text
     assert '<pre class="mermaid">' not in response.text
@@ -60,6 +60,7 @@ def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> 
             "answers": {
                 "boundary-owner": "conversation",
                 "boundary-explain": "ACP coordinates the editor and agent conversation while MCP lets the agent call external tools and data.",
+                "boundary-fill": {"conversation-layer": "conversation", "tool-layer": "capability"},
             }
         },
     )
@@ -68,6 +69,8 @@ def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> 
     payload = response.json()
     assert payload["results"][0]["verdict"] == "correct"
     assert payload["results"][1]["judge"] == "local-rubric-preview"
+    assert payload["results"][-1]["judge"] == "local-fill-paragraph"
+    assert payload["results"][-1]["verdict"] == "correct"
     assert payload["answers"]["boundary-owner"] == "conversation"
     assert (tmp_path / "progress" / "local" / "test-course-a1b2c3" / "progress.json").is_file()
 
@@ -87,6 +90,28 @@ def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> 
     event_files = tuple((tmp_path / "progress" / "local" / "test-course-a1b2c3" / "interactions").glob("*.json"))
     event_kinds = {json.loads(path.read_text())["kind"] for path in event_files}
     assert {"draft_saved", "grading_started", "grading_completed"} <= event_kinds
+
+
+def test_fill_paragraph_awards_credit_per_blank(tmp_path: Path, monkeypatch) -> None:
+    client = make_client(tmp_path, monkeypatch)
+
+    response = client.post(
+        "/api/courses/test-course-a1b2c3/lessons/boundary/attempts",
+        json={
+            "answers": {
+                "boundary-fill": {
+                    "conversation-layer": "conversation",
+                    "tool-layer": "interface",
+                }
+            }
+        },
+    )
+
+    assert response.status_code == 200
+    result = next(item for item in response.json()["results"] if item["question_id"] == "boundary-fill")
+    assert result["judge"] == "local-fill-paragraph"
+    assert result["score"] == 0.5
+    assert result["verdict"] == "partial"
 
 
 def test_navigation_and_draft_survive_a_fresh_app_instance(tmp_path: Path, monkeypatch) -> None:
@@ -119,6 +144,7 @@ def test_quiz_response_does_not_leak_answers(tmp_path: Path, monkeypatch) -> Non
     text = response.text
     assert "correct_option_ids" not in text
     assert "correct_order" not in text
+    assert "correct_option_id" not in text
     assert "reference_answer" not in text
 
 
@@ -147,15 +173,15 @@ def test_generated_questions_are_private_and_survive_restart(tmp_path: Path, mon
 
     assert generated.status_code == 200
     payload = generated.json()
-    assert payload["authored_question_count"] == 5
+    assert payload["authored_question_count"] == 6
     assert payload["generated_question_count"] == 3
-    assert len(payload["questions"]) == 8
+    assert len(payload["questions"]) == 9
     assert "correct_option_ids" not in generated.text
 
     restored = make_client(tmp_path, monkeypatch).get("/api/courses/test-course-a1b2c3/lessons/boundary/quiz")
     assert restored.status_code == 200
     assert restored.json()["generated_question_count"] == 3
-    assert len(restored.json()["questions"]) == 8
+    assert len(restored.json()["questions"]) == 9
     assert len(tuple((tmp_path / "progress" / "local" / "test-course-a1b2c3" / "generated" / "boundary").glob("*.json"))) == 1
 
     event_files = tuple((tmp_path / "progress" / "local" / "test-course-a1b2c3" / "interactions").glob("*.json"))

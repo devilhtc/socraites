@@ -17,7 +17,7 @@ from typing import Any
 COURSE_ID = re.compile(r"^[a-z][a-z0-9-]*-[a-f0-9]{6}$")
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FORBIDDEN_TAGS = {"html", "head", "body", "style", "script", "form", "iframe"}
-QUESTION_TYPES = {"single_choice", "multiple_choice", "ordering", "free_response"}
+QUESTION_TYPES = {"single_choice", "multiple_choice", "ordering", "fill_paragraph", "free_response"}
 MERMAID_RENDERER = Path(__file__).resolve().parents[3] / "agent-runtime" / "render-mermaid.mjs"
 CODE_RENDERER = Path(__file__).resolve().parents[3] / "agent-runtime" / "render-code.mjs"
 CODE_BLOCK = re.compile(
@@ -284,6 +284,7 @@ def validate_question(question: Any, index: int, errors: list[str]) -> str | Non
         "single_choice": {"options", "correct_option_ids"},
         "multiple_choice": {"options", "correct_option_ids"},
         "ordering": {"options", "correct_order"},
+        "fill_paragraph": {"blanks"},
         "free_response": {"rubric", "reference_answer"},
     }
     if not isinstance(kind, str) or kind not in QUESTION_TYPES:
@@ -304,6 +305,38 @@ def validate_question(question: Any, index: int, errors: list[str]) -> str | Non
         for field in ("rubric", "reference_answer"):
             if not isinstance(question.get(field), str) or not question[field].strip():
                 errors.append(f"{label}.{field} is required")
+        return question_id
+    if kind == "fill_paragraph":
+        blanks = question.get("blanks")
+        if not isinstance(blanks, list):
+            errors.append(f"{label}.blanks must be an array")
+            return question_id
+        if not 1 <= len(blanks) <= 10:
+            errors.append(f"{label}.blanks must contain 1–10 blanks")
+        blank_ids: list[str] = []
+        for blank_index, blank in enumerate(blanks):
+            blank_label = f"{label}.blanks[{blank_index}]"
+            if not isinstance(blank, dict):
+                errors.append(f"{blank_label} must be an object")
+                continue
+            require_keys(blank, {"id", "options", "correct_option_id"}, blank_label, errors)
+            blank_id = blank.get("id")
+            if not isinstance(blank_id, str) or not SLUG.fullmatch(blank_id):
+                errors.append(f"{blank_label}.id is invalid")
+            else:
+                blank_ids.append(blank_id)
+            ids = option_ids(blank, blank_label, errors)
+            if not 2 <= len(ids) <= 8:
+                errors.append(f"{blank_label} must have 2–8 options")
+            answer = blank.get("correct_option_id")
+            if not isinstance(answer, str) or answer not in ids:
+                errors.append(f"{blank_label}.correct_option_id must name one option ID")
+        if len(blank_ids) != len(set(blank_ids)):
+            errors.append(f"{label} has duplicate blank IDs")
+        prompt = question.get("prompt")
+        placeholders = re.findall(r"\{\{([a-z0-9][a-z0-9-]*)\}\}", prompt) if isinstance(prompt, str) else []
+        if sorted(placeholders) != sorted(blank_ids):
+            errors.append(f"{label}.prompt must contain each blank as {{{{blank-id}}}} exactly once")
         return question_id
     ids = option_ids(question, label, errors)
     minimum, maximum = (2, 8) if kind == "single_choice" else (2, 10)
