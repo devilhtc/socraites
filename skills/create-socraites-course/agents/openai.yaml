@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Socraites Course"
+  short_description: "Author validated lessons and quizzes"
+  default_prompt: "Use $create-socraites-course to create a new Socraites course in this repository."

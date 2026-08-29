@@ -1,0 +1,10 @@
+<p class="eyebrow">Lesson 1 · Boundaries</p>
+<h1>A protocol gives a conversation a shape.</h1>
+<p class="lead">A protocol boundary separates an application-facing conversation from the tools and services an agent may use behind it.</p>
+
+<h2>Keep the layers distinct</h2>
+<p>The conversation protocol carries prompts, updates, and results. A tool protocol lets an agent call external capabilities. They can cooperate without becoming the same layer.</p>
+
+<details><summary>Example: conversation state</summary><div><p>The client records which lesson is open while the agent responds through the agreed conversation interface.</p></div></details>
+<details><summary>Example: tool access</summary><div><p>The agent may call a separate tool service, but that service does not own the learner conversation.</p></div></details>
+<details><summary>Example: a useful diagnostic</summary><div><p>When something fails, first ask whether the conversation boundary or a downstream tool boundary failed.</p></div></details>

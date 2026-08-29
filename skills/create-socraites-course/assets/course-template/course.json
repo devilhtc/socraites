@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "replace-me-a1b2c3",
+  "title": "Replace Me",
+  "category": "Subject area",
+  "subtitle": "What this course helps the learner do.",
+  "description": "Replace this template copy with a concise description of the course's learning outcome.",
+  "lessons": [
+    {
+      "id": "foundation",
+      "title": "The first foundation",
+      "summary": "Replace this with the single idea taught in this section.",
+      "estimated_minutes": 8,
+      "lesson_file": "lessons/01-foundation.html",
+      "quiz_file": "quizzes/01-foundation.json"
+    }
+  ]
+}

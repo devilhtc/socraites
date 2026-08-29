@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "boundary-quiz",
+  "title": "Protocol boundary check",
+  "passing_score": 0.7,
+  "questions": [
+    {
+      "id": "boundary-owner",
+      "type": "single_choice",
+      "prompt": "What owns the learner-facing exchange in this example?",
+      "points": 1,
+      "options": [
+        {"id": "conversation", "label": "The conversation protocol"},
+        {"id": "external", "label": "An unrelated external tool"}
+      ],
+      "correct_option_ids": ["conversation"],
+      "explanation": "The conversation protocol owns the learner-facing exchange."
+    },
+    {
+      "id": "boundary-explain",
+      "type": "free_response",
+      "prompt": "Explain why a conversation protocol and a tool protocol are distinct.",
+      "points": 2,
+      "rubric": "The answer should distinguish the application-facing conversation from downstream tool invocation.",
+      "reference_answer": "The conversation protocol coordinates prompts and updates between the application and agent, while a tool protocol lets the agent invoke external capabilities.",
+      "explanation": "The layers cooperate but have different owners and responsibilities."
+    },
+    {
+      "id": "boundary-signals",
+      "type": "multiple_choice",
+      "prompt": "Which items belong to the conversation layer?",
+      "points": 1,
+      "options": [
+        {"id": "prompts", "label": "Learner prompts"},
+        {"id": "updates", "label": "Agent updates"},
+        {"id": "database", "label": "A database driver's wire calls"}
+      ],
+      "correct_option_ids": ["prompts", "updates"],
+      "explanation": "Prompts and agent updates cross the conversation boundary."
+    },
+    {
+      "id": "boundary-order",
+      "type": "ordering",
+      "prompt": "Order the simplified interaction.",
+      "points": 1,
+      "options": [
+        {"id": "prompt", "label": "Client sends a prompt"},
+        {"id": "work", "label": "Agent performs work"},
+        {"id": "result", "label": "Agent reports the result"}
+      ],
+      "correct_order": ["prompt", "work", "result"],
+      "explanation": "The prompt starts the work and the result completes the exchange."
+    },
+    {
+      "id": "boundary-scope",
+      "type": "single_choice",
+      "prompt": "Does a tool service automatically own the learner conversation?",
+      "points": 1,
+      "options": [
+        {"id": "no", "label": "No"},
+        {"id": "yes", "label": "Yes"}
+      ],
+      "correct_option_ids": ["no"],
+      "explanation": "Tool access and conversation ownership are separate concerns."
+    }
+  ]
+}

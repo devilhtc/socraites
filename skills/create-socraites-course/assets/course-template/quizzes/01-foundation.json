@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "id": "foundation-quiz",
+  "title": "Foundation check",
+  "passing_score": 0.75,
+  "questions": [
+    {
+      "id": "foundation-choice",
+      "type": "single_choice",
+      "prompt": "Replace this with one clear conceptual distinction.",
+      "points": 1,
+      "options": [
+        {"id": "correct", "label": "The correct concept"},
+        {"id": "distractor", "label": "A plausible misconception"}
+      ],
+      "correct_option_ids": ["correct"],
+      "explanation": "Explain why the correct concept fits and the distractor does not."
+    },
+    {
+      "id": "foundation-multiple",
+      "type": "multiple_choice",
+      "prompt": "Replace this with a select-all-that-apply question.",
+      "points": 2,
+      "options": [
+        {"id": "first", "label": "A correct application"},
+        {"id": "second", "label": "Another correct application"},
+        {"id": "third", "label": "A non-example"}
+      ],
+      "correct_option_ids": ["first", "second"],
+      "explanation": "Explain the property shared by the correct applications."
+    },
+    {
+      "id": "foundation-order",
+      "type": "ordering",
+      "prompt": "Replace this with a meaningful sequence.",
+      "points": 2,
+      "options": [
+        {"id": "start", "label": "The starting event"},
+        {"id": "middle", "label": "The intermediate event"},
+        {"id": "end", "label": "The resulting event"}
+      ],
+      "correct_order": ["start", "middle", "end"],
+      "explanation": "Explain why each transition follows from the previous step."
+    },
+    {
+      "id": "foundation-explain",
+      "type": "free_response",
+      "prompt": "Replace this with a request to explain the central idea in the learner's own words.",
+      "points": 3,
+      "rubric": "Describe the concepts and reasoning a good answer must contain. Reward equivalent wording.",
+      "reference_answer": "Provide a complete model answer that is detailed enough for semantic comparison.",
+      "explanation": "Restate the underlying idea and connect it to the lesson example."
+    },
+    {
+      "id": "foundation-transfer",
+      "type": "single_choice",
+      "prompt": "Replace this with a transfer question set in a new context.",
+      "points": 2,
+      "options": [
+        {"id": "transfer", "label": "The concept applied correctly"},
+        {"id": "surface", "label": "A choice based only on surface similarity"}
+      ],
+      "correct_option_ids": ["transfer"],
+      "explanation": "Explain how the same structure appears in the new context."
+    }
+  ]
+}

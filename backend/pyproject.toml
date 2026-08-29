@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "socraites-api"
+version = "0.1.0"
+description = "Local-first lesson, quiz, and ACP judge backend for Socraites"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+  "agent-client-protocol==0.12.1",
+  "fastapi==0.135.0",
+  "pydantic==2.13.4",
+  "uvicorn[standard]==0.41.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx==0.28.1",
+  "pytest==9.0.2",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/socraites_api"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
