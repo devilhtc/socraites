@@ -33,6 +33,10 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
     assert "script-src 'none'" in response.headers["content-security-policy"]
     assert "body { height:100%; margin:0; overflow:auto;" in response.text
     assert "article { width:min(100%,920px); margin:0 auto; padding:48px 32px 80px;" in response.text
+    assert '<figure class="mermaid-diagram"' in response.text
+    assert "<svg" in response.text
+    assert '<pre class="mermaid">' not in response.text
+    assert "fonts.googleapis.com" not in response.text
 
 
 def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> None:

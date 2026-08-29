@@ -8,7 +8,7 @@ The application stores courses and learner activity as ordinary local files. Not
 
 - A React/Vite lesson player with light and dark themes
 - A FastAPI backend with file-backed persistence
-- Bite-sized HTML lessons rendered in a restricted iframe
+- Bite-sized HTML lessons with theme-aware Mermaid diagrams, rendered in a restricted iframe
 - Single-choice, multiple-choice, ordering, and free-response questions
 - Refresh-safe drafts, immutable attempts, progress, generated questions, and tutor history
 - Deterministic local grading for structured questions
@@ -84,7 +84,7 @@ If you prefer API-key authentication, export `OPENAI_API_KEY` before starting So
 
 ## Create a course
 
-The repository includes the [`create-socraites-course`](skills/create-socraites-course/SKILL.md) skill. It tells an agent how to generate stable course IDs, lesson manifests, short HTML fragments, collapsible examples, and 5–7 question quizzes in the exact format Socraites accepts.
+The repository includes the [`create-socraites-course`](skills/create-socraites-course/SKILL.md) skill. It tells an agent how to generate stable course IDs, lesson manifests, short HTML fragments, theme-aware Mermaid diagrams, collapsible examples, and 5–7 question quizzes in the exact format Socraites accepts.
 
 From Codex or another repository-aware coding agent, ask:
 

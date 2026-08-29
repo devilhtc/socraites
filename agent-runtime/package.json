@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "dependencies": {
-    "@agentclientprotocol/codex-acp": "1.7.0"
+    "@agentclientprotocol/codex-acp": "1.7.0",
+    "beautiful-mermaid": "1.1.3"
   }
 }

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
+import subprocess
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
@@ -15,6 +17,7 @@ COURSE_ID = re.compile(r"^[a-z][a-z0-9-]*-[a-f0-9]{6}$")
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FORBIDDEN_TAGS = {"html", "head", "body", "style", "script", "form", "iframe"}
 QUESTION_TYPES = {"single_choice", "multiple_choice", "ordering", "free_response"}
+MERMAID_RENDERER = Path(__file__).resolve().parents[3] / "agent-runtime" / "render-mermaid.mjs"
 SLOP_PUNCTUATION = {
     "—": "em dash",
     "–": "en dash",
@@ -34,6 +37,11 @@ class LessonParser(HTMLParser):
         self._in_summary = False
         self._summary_parts: list[str] = []
         self.text_parts: list[str] = []
+        self.mermaid_sources: list[str] = []
+        self.mermaid_has_nested_markup = False
+        self.mermaid_has_invalid_wrapper = False
+        self._in_mermaid = False
+        self._mermaid_parts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in FORBIDDEN_TAGS:
@@ -43,16 +51,65 @@ class LessonParser(HTMLParser):
         if tag == "summary":
             self._in_summary = True
             self._summary_parts = []
+        attributes = dict(attrs)
+        if tag == "pre" and "mermaid" in (attributes.get("class") or "").split():
+            if self.get_starttag_text() != '<pre class="mermaid">':
+                self.mermaid_has_invalid_wrapper = True
+            self._in_mermaid = True
+            self._mermaid_parts = []
+        elif self._in_mermaid:
+            self.mermaid_has_nested_markup = True
 
     def handle_endtag(self, tag: str) -> None:
         if tag == "summary" and self._in_summary:
             self.summary_text.append("".join(self._summary_parts).strip())
             self._in_summary = False
+        if tag == "pre" and self._in_mermaid:
+            self.mermaid_sources.append("".join(self._mermaid_parts).strip())
+            self._in_mermaid = False
 
     def handle_data(self, data: str) -> None:
         self.text_parts.append(data)
         if self._in_summary:
             self._summary_parts.append(data)
+        if self._in_mermaid:
+            self._mermaid_parts.append(data)
+
+
+def validate_mermaid(source: str, path: Path, index: int, errors: list[str]) -> None:
+    label = f"{path} Mermaid block {index}"
+    if not source:
+        errors.append(f"{label} is empty")
+        return
+    node = shutil.which("node")
+    if node is None or not MERMAID_RENDERER.is_file():
+        errors.append(f"{label} cannot be checked because the Mermaid renderer is unavailable; run scripts/setup.sh")
+        return
+    try:
+        completed = subprocess.run(
+            [node, str(MERMAID_RENDERER)],
+            input=json.dumps({"source": source}),
+            capture_output=True,
+            check=False,
+            text=True,
+            timeout=8,
+        )
+    except subprocess.TimeoutExpired:
+        errors.append(f"{label} took too long to render")
+        return
+    if completed.returncode != 0:
+        errors.append(f"{label} renderer stopped unexpectedly")
+        return
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        errors.append(f"{label} renderer returned an unreadable result")
+        return
+    if not isinstance(payload, dict):
+        errors.append(f"{label} renderer returned an unreadable result")
+        return
+    if message := payload.get("error"):
+        errors.append(f"{label} is invalid: {message}")
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, Any] | None:
@@ -118,6 +175,12 @@ def validate_lesson(path: Path, errors: list[str]) -> None:
         errors.append(f"{path} has fewer examples ({len(examples)}) than learning sections ({parser.h2_count})")
     if re.search(r"<strong>[^<]+:</strong>", html):
         errors.append(f"{path} uses a bold label ending in a colon; write the lead-in as a sentence")
+    if parser.mermaid_has_nested_markup:
+        errors.append(f'{path} Mermaid blocks must contain plain Mermaid text inside <pre class="mermaid">')
+    if parser.mermaid_has_invalid_wrapper:
+        errors.append(f'{path} must use the exact Mermaid opening tag <pre class="mermaid">')
+    for index, source in enumerate(parser.mermaid_sources, start=1):
+        validate_mermaid(source, path, index, errors)
 
 
 def validate_unslop_punctuation(root: Path, errors: list[str]) -> None:

@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .judge import JudgeService, JudgeUnavailable
+from .mermaid import MermaidRenderer
 from .models import (
     AttemptRequest,
     AttemptResult,
@@ -87,6 +88,11 @@ LESSON_SHELL = """<!doctype html>
     .trace { display:grid; gap:10px; margin:24px 0; }
     .trace div { padding:13px 16px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
     .trace b { color:var(--teal); }
+    .mermaid-diagram { margin:28px 0; padding:20px; overflow:auto; border:1px solid var(--line); border-radius:14px; background:var(--panel-strong); }
+    .mermaid-diagram svg { display:block; width:100%; min-width:460px; height:auto; margin:0 auto; }
+    .mermaid-error { margin:28px 0; padding:18px 20px; border:1px solid var(--accent); border-radius:14px; background:var(--panel); }
+    .mermaid-error p { margin:0 0 12px; }
+    .mermaid-error pre { margin:0; }
     details { margin:22px 0; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
     summary { cursor:pointer; padding:15px 18px; color:var(--ink); font-weight:700; }
     details > div { padding:0 18px 16px; }
@@ -111,6 +117,7 @@ def create_app(
     course_store = CourseStore(courses_root or DATA_ROOT / "courses")
     progress_store = ProgressStore(progress_root or DATA_ROOT / "progress")
     judge_service = JudgeService(PROJECT_ROOT)
+    mermaid_renderer = MermaidRenderer(PROJECT_ROOT / "agent-runtime" / "render-mermaid.mjs")
 
     def combined_quiz(course_id: str, lesson_id: str) -> tuple[Quiz, int]:
         authored = course_store.quiz(course_id, lesson_id)
@@ -337,6 +344,7 @@ def create_app(
         theme: Literal["light", "dark"] = "dark",
     ) -> HTMLResponse:
         _, fragment = course_store.lesson_html(course_id, lesson_id)
+        fragment = await mermaid_renderer.render_fragment(fragment)
         return HTMLResponse(
             LESSON_SHELL.replace("{{THEME}}", theme).replace("{{CONTENT}}", fragment),
             headers=LESSON_HEADERS,

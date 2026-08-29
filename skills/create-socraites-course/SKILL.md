@@ -14,7 +14,7 @@ Create durable course content under `data/courses/<course-id>/`. Read [reference
 3. Plan a short sequence of lessons. Each lesson should teach one coherent idea and take roughly 5 to 15 minutes.
 4. Apply the `unslop` skill before drafting when it is available. Whether or not that skill is installed, follow the [prose and voice checklist](references/course-format.md#prose-and-voice) for every learner-facing string in the manifest, lessons, and quizzes.
 5. Create `course.json`, one HTML fragment per lesson under `lessons/`, and one matching quiz under `quizzes/`. Start from [assets/course-template](assets/course-template) when useful, but replace all example IDs and content.
-6. Give every substantive learning point at least one concrete example. Put examples in the exact collapsible form documented in the format reference.
+6. Give every substantive learning point at least one concrete example. Put examples in the exact collapsible form documented in the format reference. Add a Mermaid diagram only when it makes an important relationship easier to understand than the nearby prose.
 7. Write 5 to 7 varied questions per lesson. Include explanations for every question and specific rubrics plus reference answers for free responses.
 8. Validate the finished course:
 
@@ -26,7 +26,7 @@ Create durable course content under `data/courses/<course-id>/`. Read [reference
 
 ## Boundaries
 
-- Lesson files are trusted HTML fragments rendered inside Socraites' shared shell. Do not include document wrappers, scripts, stylesheets, forms, or iframes.
+- Lesson files are trusted HTML fragments rendered inside Socraites' shared shell. Do not include document wrappers, scripts, stylesheets, forms, or iframes. Mermaid source is allowed only in the exact `<pre class="mermaid">` wrapper from the format reference; Socraites renders it without lesson scripts.
 - Keep answer keys, rubrics, and reference answers only in quiz JSON. Never place them in learner-visible lesson metadata or frontend code.
 - Preserve existing course IDs and lesson IDs when revising content so learner progress remains connected.
 - Treat source accuracy separately from formatting. Research or cite authoritative material when the subject requires it; never invent facts or references.

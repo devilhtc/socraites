@@ -66,6 +66,24 @@ Allowed presentation patterns include:
 <details><summary>Example: a concrete case</summary><div><p>Show how the learning point behaves in a realistic situation.</p></div></details>
 ```
 
+### Mermaid diagrams
+
+Use a Mermaid diagram when a sequence, state change, hierarchy, or multi-party relationship is materially easier to understand as a picture. Keep it to the important interactions and explain the point in nearby prose. Do not repeat a walkthrough that is already clear in the text.
+
+Write the source in this exact wrapper, with no extra classes or attributes:
+
+```html
+<pre class="mermaid">
+sequenceDiagram
+  participant C as Client
+  participant A as Agent
+  C->>A: initialize
+  A-->>C: version and capabilities
+</pre>
+```
+
+Socraites renders the block to a theme-aware SVG before placing it in the lesson iframe. No script runs in the lesson. The renderer supports flowcharts, state diagrams, sequence diagrams, class diagrams, entity-relationship diagrams, and XY charts. Prefer flowcharts, state diagrams, and short sequence diagrams for teaching. Keep labels brief, do not add Mermaid initialization directives, and do not put HTML markup inside the block.
+
 The `<details>` and `<summary>` opening tags stay on one line exactly as shown. Put only one line break after `</details>` before the next block.
 
 Quality requirements:
@@ -74,7 +92,7 @@ Quality requirements:
 - One coherent idea per lesson; split dense material into more lessons.
 - Every substantive learning point has at least one example.
 - At least three `<details><summary>Example: …</summary>` blocks per lesson.
-- Prefer important interactions over exhaustive sequences. Use `.trace`, tables, or concise HTML walkthroughs when relationships are clearer visually.
+- Prefer important interactions over exhaustive sequences. Use `.trace`, tables, concise HTML walkthroughs, or Mermaid diagrams when relationships are clearer visually.
 - Use headings, paragraphs, lists, `code`, `pre`, `table`, `.concept`, `.trace`, and collapsible examples. Do not add inline styles.
 - Never include `<html>`, `<head>`, `<body>`, `<style>`, `<script>`, `<form>`, or `<iframe>`.
 
