@@ -440,6 +440,7 @@ export default function App() {
   const [tutorSending, setTutorSending] = useState(false);
   const [pendingTutorMessage, setPendingTutorMessage] = useState<string | null>(null);
   const [tutorError, setTutorError] = useState<string | null>(null);
+  const [lessonContentRevision, setLessonContentRevision] = useState(0);
 
   async function refreshLibrary() {
     const next = await api.courses();
@@ -707,6 +708,13 @@ export default function App() {
     setTutorError(null);
     try {
       setTutorView(await api.sendTutorMessage(routeCourseId, lessonId, message));
+      const [nextCourse, nextQuiz] = await Promise.all([
+        api.course(routeCourseId),
+        api.quiz(routeCourseId, lessonId),
+      ]);
+      setCourseView(nextCourse);
+      setQuiz(nextQuiz);
+      setLessonContentRevision((current) => current + 1);
       return true;
     } catch (reason) {
       setTutorError(reason instanceof Error ? reason.message : "The tutor could not answer.");
@@ -861,7 +869,7 @@ export default function App() {
           <section className="lesson-surface">
             <iframe
               className="lesson-frame"
-              key={`${lessonId}-${theme}`}
+              key={`${lessonId}-${theme}-${lessonContentRevision}`}
               sandbox=""
               scrolling="auto"
               title={`${currentLesson.title} lesson`}

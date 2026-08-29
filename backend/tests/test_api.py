@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from socraites_api.judge import JudgeService
+from socraites_api.judge import JudgeService, TutorReply
 from socraites_api.main import create_app
 from socraites_api.models import ChoiceOption, SingleChoiceQuestion
 
@@ -157,15 +157,20 @@ def test_generated_questions_are_private_and_survive_restart(tmp_path: Path, mon
 def test_tutor_conversation_uses_chapter_context_and_survives_restart(tmp_path: Path, monkeypatch) -> None:
     captured: dict[str, object] = {}
 
-    async def tutor(_self, course_title, lesson_title, lesson_html, history, user_text):
+    async def tutor(_self, course_title, lesson_title, lesson_html, quiz, history, user_text):
         captured.update({
             "course_title": course_title,
             "lesson_title": lesson_title,
             "lesson_html": lesson_html,
+            "quiz": quiz,
             "history": history,
             "user_text": user_text,
         })
-        return "Think of ACP as the conversation boundary between an editor and an agent."
+        return TutorReply(
+            text="Think of ACP as the conversation boundary between an editor and an agent.",
+            lesson_html=lesson_html,
+            quiz_json=quiz.model_dump_json(indent=2),
+        )
 
     monkeypatch.setattr(JudgeService, "tutor", tutor)
     client = make_client(tmp_path, monkeypatch)

@@ -260,14 +260,22 @@ def create_app(
         if conversation is None:
             raise InvalidDataError("tutor conversation could not be loaded")
         _, lesson_html = course_store.lesson_html(course_id, lesson_id)
+        lesson_quiz = course_store.quiz(course_id, lesson_id)
         history = [item for item in conversation.turns if item.turn_id != turn.turn_id and item.status == "completed"]
         try:
-            assistant_text = await judge_service.tutor(
+            tutor_reply = await judge_service.tutor(
                 course.title,
                 lesson.title,
                 lesson_html,
+                lesson_quiz,
                 history,
                 user_text,
+            )
+            course_store.update_lesson_assets(
+                course_id,
+                lesson_id,
+                tutor_reply.lesson_html,
+                tutor_reply.quiz_json,
             )
         except JudgeUnavailable as exc:
             progress_store.fail_tutor_turn(
@@ -292,7 +300,7 @@ def create_app(
             lesson_id,
             conversation.conversation_id,
             turn.turn_id,
-            assistant_text,
+            tutor_reply.text,
         )
 
     @application.post(

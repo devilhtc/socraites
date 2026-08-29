@@ -12,7 +12,7 @@ The application stores courses and learner activity as ordinary local files. Not
 - Single-choice, multiple-choice, ordering, and free-response questions
 - Refresh-safe drafts, immutable attempts, progress, generated questions, and tutor history
 - Deterministic local grading for structured questions
-- Optional semantic grading, question generation, and tutoring through Codex ACP
+- Optional semantic grading, question generation, tutoring, and chapter editing through Codex ACP
 - A bundled authoring skill and validator for creating new courses
 
 ## Requirements
@@ -68,7 +68,7 @@ To use your existing ChatGPT/Codex login:
 
    The response should contain `"active_mode":"codex-acp"`.
 
-The ACP adapter uses the authentication cached by the local Codex CLI. Socraites starts the agent in a dedicated empty workspace, advertises no filesystem or terminal capabilities, denies permission requests, and asks the agent not to use tools. This limits accidental access, but it is not a hardened process sandbox; use lesson and answer content you trust.
+The ACP adapter uses the authentication cached by the local Codex CLI. Grading and question generation run without write access. For an explicit lesson or quiz edit, Socraites gives the tutor temporary copies of only the selected chapter's `lesson.html` and `quiz.json`; it validates both before copying changes into the course. The tutor cannot see learner progress, other chapters, or the rest of the repository through that workspace. Permission escalation, browser access, and network access remain disabled. This is careful local containment, not a hardened multi-user sandbox, so use lesson and answer content you trust. See the [official Codex sandboxing overview](https://learn.chatgpt.com/docs/sandboxing) for the underlying workspace-write model.
 
 ### Agent modes
 
@@ -161,4 +161,5 @@ data/            private courses and learner state; always gitignored
 - Lesson HTML is served with a restrictive Content Security Policy and without scripts, forms, network access, or same-origin privileges.
 - Quiz answer keys are removed from API responses before they reach the browser.
 - Course paths and IDs are validated to prevent escaping the local data directory.
+- Tutor-authored edits are staged in a temporary two-file workspace and validated before they replace lesson content.
 - The app binds to localhost by default. It is designed as a personal local application, not a hardened multi-user service.

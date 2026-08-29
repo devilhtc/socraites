@@ -78,10 +78,25 @@ def _atomic_json(path: Path, payload: Any) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def _atomic_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(handle, "w", encoding="utf-8") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
 class CourseStore:
     def __init__(self, courses_root: Path) -> None:
         self.root = courses_root.resolve()
         self.root.mkdir(parents=True, exist_ok=True)
+        self._lock = RLock()
 
     def list_courses(self) -> list[CourseManifest]:
         if not self.root.exists():
@@ -118,6 +133,51 @@ class CourseStore:
             return Quiz.model_validate(_read_json(path))
         except ValidationError as exc:
             raise InvalidDataError("quiz file is invalid") from exc
+
+    def update_lesson_assets(
+        self,
+        course_id: str,
+        lesson_id: str,
+        lesson_html: str,
+        quiz_payload: str,
+    ) -> bool:
+        """Validate and atomically persist edits to one authored lesson and quiz."""
+        manifest = self.course(course_id)
+        lesson = next((item for item in manifest.lessons if item.id == lesson_id), None)
+        if lesson is None:
+            raise NotFoundError("lesson not found")
+
+        fragment = lesson_html.strip()
+        if not fragment:
+            raise InvalidDataError("edited lesson cannot be empty")
+        if len(fragment) > 200_000:
+            raise InvalidDataError("edited lesson is too large")
+        if re.search(r"<\s*(?:html|head|body|style|script|form|iframe)\b", fragment, re.IGNORECASE):
+            raise InvalidDataError("edited lesson contains a forbidden HTML element")
+
+        try:
+            quiz = Quiz.model_validate_json(quiz_payload)
+        except ValidationError as exc:
+            raise InvalidDataError("edited quiz file is invalid") from exc
+        current_quiz = self.quiz(course_id, lesson_id)
+        if quiz.id != current_quiz.id:
+            raise InvalidDataError("edited quiz must preserve its id")
+
+        course_root = self.root / manifest.id
+        lesson_path = self._bounded_path(course_root, lesson.lesson_file)
+        quiz_path = self._bounded_path(course_root, lesson.quiz_file)
+        normalized_html = fragment + "\n"
+        lesson_changed = lesson_path.read_text(encoding="utf-8").strip() != fragment
+        quiz_changed = current_quiz != quiz
+        if not lesson_changed and not quiz_changed:
+            return False
+
+        with self._lock:
+            if lesson_changed:
+                _atomic_text(lesson_path, normalized_html)
+            if quiz_changed:
+                _atomic_json(quiz_path, quiz.model_dump(mode="json"))
+        return True
 
     def public_quiz(self, course_id: str, lesson_id: str) -> PublicQuiz:
         return self.to_public_quiz(self.quiz(course_id, lesson_id))

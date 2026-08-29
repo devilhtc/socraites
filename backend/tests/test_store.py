@@ -1,7 +1,10 @@
 import re
+import shutil
 from pathlib import Path
 
-from socraites_api.store import CourseStore, ProgressStore
+import pytest
+
+from socraites_api.store import CourseStore, InvalidDataError, ProgressStore
 
 
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures" / "courses"
@@ -46,3 +49,34 @@ def test_store_roots_are_created_when_missing(tmp_path: Path) -> None:
     assert courses_root.is_dir()
     assert progress_root.is_dir()
     assert store.list_courses() == []
+
+
+def test_tutor_edits_are_validated_and_persisted_to_one_lesson(tmp_path: Path) -> None:
+    courses_root = tmp_path / "courses"
+    shutil.copytree(FIXTURES_ROOT, courses_root)
+    store = CourseStore(courses_root)
+    course_id = "test-course-a1b2c3"
+    lesson_id = "boundary"
+    _, original_html = store.lesson_html(course_id, lesson_id)
+    quiz = store.quiz(course_id, lesson_id)
+
+    changed = store.update_lesson_assets(
+        course_id,
+        lesson_id,
+        original_html + "\n<p>A tutor-authored example.</p>",
+        quiz.model_dump_json(indent=2),
+    )
+
+    assert changed is True
+    assert "A tutor-authored example" in store.lesson_html(course_id, lesson_id)[1]
+    assert store.quiz(course_id, lesson_id).id == quiz.id
+
+    with pytest.raises(InvalidDataError, match="forbidden HTML"):
+        store.update_lesson_assets(
+            course_id,
+            lesson_id,
+            "<script>alert('no')</script>",
+            quiz.model_dump_json(indent=2),
+        )
+
+    assert "A tutor-authored example" in store.lesson_html(course_id, lesson_id)[1]
