@@ -885,6 +885,13 @@ export default function App() {
           </section>
         ) : (
           <section className="quiz-section quiz-only" aria-label={`${currentLesson.title} quiz`}>
+            <button
+              className="quiz-back-button"
+              type="button"
+              onClick={() => navigate(lessonId, "lesson")}
+            >
+              <span aria-hidden="true">←</span> Back to lesson
+            </button>
             <div className="quiz-statusline">
               <p className="save-state" aria-live="polite">
                 {generatingQuestions ? "Codex is writing three new questions…" : submitting ? "Grading in progress — you can refresh safely" : draftState === "saving" ? "Saving draft…" : draftState === "unsaved" ? "Draft has unsaved changes" : `${quiz?.questions.length ?? 0} questions · Draft saved locally`}

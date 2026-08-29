@@ -222,6 +222,8 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 
 .quiz-section { width: min(100%, 900px); margin: 88px auto 0; }
 .quiz-only { margin-top: 0; }
+.quiz-back-button { display: inline-flex; align-items: center; gap: 7px; margin: 4px 0 18px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-raised); color: var(--body); cursor: pointer; font-size: 11px; font-weight: 800; }
+.quiz-back-button:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--ink); }
 .quiz-statusline { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 18px; padding: 10px 0 18px; border-bottom: 1px solid var(--line); }
 .quiz-statusline .save-state { margin: 0; }
 .save-state { margin: 12px 0 0; color: var(--muted); font-size: 12px; }
