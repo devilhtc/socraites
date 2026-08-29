@@ -84,6 +84,37 @@ sequenceDiagram
 
 Socraites renders the block to a theme-aware SVG before placing it in the lesson iframe. No script runs in the lesson. The renderer supports flowcharts, state diagrams, sequence diagrams, class diagrams, entity-relationship diagrams, and XY charts. Prefer flowcharts, state diagrams, and short sequence diagrams for teaching. Keep labels brief, do not add Mermaid initialization directives, and do not put HTML markup inside the block.
 
+### Highlighted code
+
+Give code a language when syntax color makes its structure easier to scan:
+
+```html
+<pre><code class="language-js">const response = await client.initialize(options);
+if (!response.agentCapabilities.sessionLoad) {
+  disableLoadButton();
+}</code></pre>
+```
+
+Socraites highlights the code before it enters the lesson and uses the lesson's light or dark palette. Use a Highlight.js common-language name or alias, including `bash`, `c`, `cpp`, `csharp`, `css`, `diff`, `go`, `graphql`, `java`, `javascript`, `js`, `json`, `kotlin`, `markdown`, `php`, `plaintext`, `python`, `r`, `ruby`, `rust`, `shell`, `sql`, `swift`, `typescript`, `ts`, `xml`, `yaml`, or `yml`. Leave off the class for intentionally plain text. Escape code characters that HTML would interpret, such as `&lt;`, `&gt;`, and `&amp;`.
+
+Keep examples focused on the decision being taught. A short runnable fragment is better than a whole file with unrelated setup.
+
+### YouTube videos
+
+Embed a single video with its 11-character YouTube ID and a specific accessible title:
+
+```html
+<div class="youtube-video" data-video-id="M7lc1UVf-VE" data-title="YouTube embedded player demonstration"></div>
+```
+
+To begin at a useful moment, add an integer start time in seconds after the title:
+
+```html
+<div class="youtube-video" data-video-id="M7lc1UVf-VE" data-title="Player event handling demonstration" data-start="45"></div>
+```
+
+Use the exact attribute order shown. Socraites creates a lazy-loaded player through `youtube-nocookie.com`; opening the lesson may still contact YouTube. Embed only a video you have checked, name what the learner should watch for in nearby prose, and never fabricate a video ID or title. Do not paste YouTube's raw iframe markup.
+
 The `<details>` and `<summary>` opening tags stay on one line exactly as shown. Put only one line break after `</details>` before the next block.
 
 Quality requirements:
@@ -92,8 +123,8 @@ Quality requirements:
 - One coherent idea per lesson; split dense material into more lessons.
 - Every substantive learning point has at least one example.
 - At least three `<details><summary>Example: …</summary>` blocks per lesson.
-- Prefer important interactions over exhaustive sequences. Use `.trace`, tables, concise HTML walkthroughs, or Mermaid diagrams when relationships are clearer visually.
-- Use headings, paragraphs, lists, `code`, `pre`, `table`, `.concept`, `.trace`, and collapsible examples. Do not add inline styles.
+- Prefer important interactions over exhaustive sequences. Use `.trace`, tables, concise HTML walkthroughs, Mermaid diagrams, highlighted code, or a checked video when relationships are clearer in that medium.
+- Use headings, paragraphs, lists, `code`, `pre`, `table`, `.concept`, `.trace`, the documented media markers, and collapsible examples. Do not add inline styles.
 - Never include `<html>`, `<head>`, `<body>`, `<style>`, `<script>`, `<form>`, or `<iframe>`.
 
 ## Prose and voice

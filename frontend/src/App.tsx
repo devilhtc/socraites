@@ -880,7 +880,8 @@ export default function App() {
             <iframe
               className="lesson-frame"
               key={`${lessonId}-${theme}-${lessonContentRevision}`}
-              sandbox=""
+              sandbox="allow-scripts allow-same-origin allow-presentation"
+              allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
               scrolling="auto"
               title={`${currentLesson.title} lesson`}
               src={`/render/courses/${routeCourseId}/lessons/${lessonId}?theme=${theme}`}

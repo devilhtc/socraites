@@ -10,6 +10,9 @@ try {
   if (typeof payload.source !== "string" || !payload.source.trim()) {
     throw new Error("The Mermaid block is empty.");
   }
+  if (payload.source.length > 20000) {
+    throw new Error("Mermaid blocks must not exceed 20,000 characters.");
+  }
   if (/^\s*%%\{/m.test(payload.source) || /^\s*click\s+/im.test(payload.source)) {
     throw new Error("Mermaid configuration and click directives are not supported in lessons.");
   }

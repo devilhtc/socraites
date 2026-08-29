@@ -11,6 +11,11 @@ flowchart LR
   Agent --> Tools
 </pre>
 
+<pre><code class="language-js">const result = await client.prompt(sessionId, content);
+render(result.stopReason);</code></pre>
+
+<div class="youtube-video" data-video-id="M7lc1UVf-VE" data-title="YouTube embedded player demonstration"></div>
+
 <details><summary>Example: conversation state</summary><div><p>The client records which lesson is open while the agent responds through the agreed conversation interface.</p></div></details>
 <details><summary>Example: tool access</summary><div><p>The agent may call a separate tool service, but that service does not own the learner conversation.</p></div></details>
 <details><summary>Example: a useful diagnostic</summary><div><p>When something fails, first ask whether the conversation boundary or a downstream tool boundary failed.</p></div></details>

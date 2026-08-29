@@ -28,15 +28,20 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
 
     assert response.status_code == 200
     assert '<html lang="en" data-theme="light">' in response.text
-    assert "sandbox" in response.headers["content-security-policy"]
-    assert "sandbox allow-same-origin" not in response.headers["content-security-policy"]
+    assert "sandbox allow-scripts allow-same-origin allow-presentation" in response.headers["content-security-policy"]
+    assert "frame-src https://www.youtube-nocookie.com" in response.headers["content-security-policy"]
     assert "script-src 'none'" in response.headers["content-security-policy"]
+    assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
     assert "body { height:100%; margin:0; overflow:auto;" in response.text
     assert "article { width:min(100%,920px); margin:0 auto; padding:48px 32px 80px;" in response.text
     assert '<figure class="mermaid-diagram"' in response.text
     assert "<svg" in response.text
     assert '<pre class="mermaid">' not in response.text
     assert "fonts.googleapis.com" not in response.text
+    assert '<pre class="highlighted-code" data-language="JS">' in response.text
+    assert 'class="hljs-keyword"' in response.text
+    assert 'src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE"' in response.text
+    assert 'title="YouTube embedded player demonstration"' in response.text
 
 
 def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> None:

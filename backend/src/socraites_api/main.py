@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .judge import JudgeService, JudgeUnavailable
+from .lesson_media import render_youtube_embeds
 from .mermaid import MermaidRenderer
 from .models import (
     AttemptRequest,
@@ -30,13 +31,16 @@ from .models import (
     WorkspaceView,
 )
 from .store import CourseStore, InvalidDataError, NotFoundError, ProgressStore
+from .syntax import SyntaxHighlighter
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_ROOT = PROJECT_ROOT / "data"
 
+# YouTube's player needs scripts, same-origin state, and an origin referrer in its
+# nested frame. script-src still blocks every script in the lesson document itself.
 LESSON_CSP = "; ".join(
     (
-        "sandbox",
+        "sandbox allow-scripts allow-same-origin allow-presentation",
         "default-src 'none'",
         "style-src 'unsafe-inline'",
         "img-src data:",
@@ -45,7 +49,7 @@ LESSON_CSP = "; ".join(
         "font-src 'none'",
         "media-src 'none'",
         "object-src 'none'",
-        "frame-src 'none'",
+        "frame-src https://www.youtube-nocookie.com",
         "form-action 'none'",
         "base-uri 'none'",
         "frame-ancestors 'self'",
@@ -56,7 +60,7 @@ LESSON_HEADERS = {
     "Cache-Control": "no-store, max-age=0",
     "Content-Security-Policy": LESSON_CSP,
     "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
-    "Referrer-Policy": "no-referrer",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
     "X-Content-Type-Options": "nosniff",
 }
 
@@ -67,8 +71,8 @@ LESSON_SHELL = """<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Socraites lesson</title>
   <style>
-    :root { color-scheme:light; --page:#fbf7ee; --panel:#f2eadc; --panel-strong:#fffdf8; --ink:#211f1b; --body:#514d45; --muted:#777168; --line:#d9cfbf; --accent:#a85f16; --teal:#167b70; --code:#e9e2d6; }
-    :root[data-theme="dark"] { color-scheme:dark; --page:#151514; --panel:#1d1d1b; --panel-strong:#101110; --ink:#f6f2e8; --body:#d3cfc5; --muted:#aaa69d; --line:#31312f; --accent:#f4be5b; --teal:#72d6c9; --code:#222321; }
+    :root { color-scheme:light; --page:#fbf7ee; --panel:#f2eadc; --panel-strong:#fffdf8; --ink:#211f1b; --body:#514d45; --muted:#777168; --line:#d9cfbf; --accent:#a85f16; --teal:#167b70; --code:#e9e2d6; --syntax-comment:#777168; --syntax-keyword:#9c3d10; --syntax-string:#167b70; --syntax-number:#8a4fa3; --syntax-title:#245ea8; --syntax-variable:#8b5a12; --syntax-addition:#277442; --syntax-deletion:#b13535; }
+    :root[data-theme="dark"] { color-scheme:dark; --page:#151514; --panel:#1d1d1b; --panel-strong:#101110; --ink:#f6f2e8; --body:#d3cfc5; --muted:#aaa69d; --line:#31312f; --accent:#f4be5b; --teal:#72d6c9; --code:#222321; --syntax-comment:#8d897f; --syntax-keyword:#ff9b72; --syntax-string:#72d6c9; --syntax-number:#c7a0e8; --syntax-title:#8ab4f8; --syntax-variable:#efc06f; --syntax-addition:#7ed49a; --syntax-deletion:#ff8e8e; }
     * { box-sizing:border-box; }
     html { height:100%; overflow:hidden; }
     body { height:100%; margin:0; overflow:auto; overscroll-behavior:contain; background:var(--page); color:var(--ink); font:17px/1.7 Inter,ui-sans-serif,system-ui,sans-serif; }
@@ -82,6 +86,22 @@ LESSON_SHELL = """<!doctype html>
     code { color:var(--teal); background:var(--code); padding:.12em .35em; border-radius:5px; }
     pre { overflow:auto; padding:20px; border:1px solid var(--line); border-radius:14px; background:var(--panel-strong); }
     pre code { padding:0; background:none; color:var(--body); }
+    pre.highlighted-code { position:relative; padding-top:44px; }
+    pre.highlighted-code::before { content:attr(data-language); position:absolute; top:13px; right:16px; color:var(--muted); font:700 11px/1 ui-sans-serif,system-ui,sans-serif; letter-spacing:.12em; }
+    pre.highlighted-code code { display:block; color:var(--body); font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .hljs-comment,.hljs-quote { color:var(--syntax-comment); font-style:italic; }
+    .hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-section { color:var(--syntax-keyword); }
+    .hljs-string,.hljs-regexp,.hljs-symbol,.hljs-bullet,.hljs-link { color:var(--syntax-string); }
+    .hljs-number,.hljs-meta { color:var(--syntax-number); }
+    .hljs-title,.hljs-title.function_,.hljs-title.class_,.hljs-built_in,.hljs-type { color:var(--syntax-title); }
+    .hljs-variable,.hljs-template-variable,.hljs-attribute,.hljs-attr,.hljs-property,.hljs-params { color:var(--syntax-variable); }
+    .hljs-tag,.hljs-name,.hljs-selector-id,.hljs-selector-class { color:var(--teal); }
+    .hljs-addition { color:var(--syntax-addition); }
+    .hljs-deletion { color:var(--syntax-deletion); }
+    .hljs-emphasis { font-style:italic; }
+    .hljs-strong { font-weight:700; }
+    .syntax-error,.youtube-error { margin:28px 0; padding:18px 20px; border:1px solid var(--accent); border-radius:14px; background:var(--panel); }
+    .syntax-error p,.youtube-error p { margin:0 0 12px; }
     .lead { color:var(--ink); font-size:21px; line-height:1.6; }
     .concept { margin:28px 0; padding:22px 24px; border-left:3px solid var(--accent); background:var(--panel); border-radius:0 14px 14px 0; }
     .concept p { margin:0; }
@@ -93,6 +113,9 @@ LESSON_SHELL = """<!doctype html>
     .mermaid-error { margin:28px 0; padding:18px 20px; border:1px solid var(--accent); border-radius:14px; background:var(--panel); }
     .mermaid-error p { margin:0 0 12px; }
     .mermaid-error pre { margin:0; }
+    .youtube-embed { margin:32px 0; }
+    .youtube-embed iframe { display:block; width:100%; min-height:200px; aspect-ratio:16/9; border:1px solid var(--line); border-radius:14px; background:#000; }
+    .youtube-embed figcaption { margin-top:9px; color:var(--muted); font-size:13px; }
     details { margin:22px 0; border:1px solid var(--line); border-radius:12px; background:var(--panel); }
     summary { cursor:pointer; padding:15px 18px; color:var(--ink); font-weight:700; }
     details > div { padding:0 18px 16px; }
@@ -118,6 +141,7 @@ def create_app(
     progress_store = ProgressStore(progress_root or DATA_ROOT / "progress")
     judge_service = JudgeService(PROJECT_ROOT)
     mermaid_renderer = MermaidRenderer(PROJECT_ROOT / "agent-runtime" / "render-mermaid.mjs")
+    syntax_highlighter = SyntaxHighlighter(PROJECT_ROOT / "agent-runtime" / "render-code.mjs")
 
     def combined_quiz(course_id: str, lesson_id: str) -> tuple[Quiz, int]:
         authored = course_store.quiz(course_id, lesson_id)
@@ -344,7 +368,9 @@ def create_app(
         theme: Literal["light", "dark"] = "dark",
     ) -> HTMLResponse:
         _, fragment = course_store.lesson_html(course_id, lesson_id)
+        fragment = render_youtube_embeds(fragment)
         fragment = await mermaid_renderer.render_fragment(fragment)
+        fragment = await syntax_highlighter.render_fragment(fragment)
         return HTMLResponse(
             LESSON_SHELL.replace("{{THEME}}", theme).replace("{{CONTENT}}", fragment),
             headers=LESSON_HEADERS,

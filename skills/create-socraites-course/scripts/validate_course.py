@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import html
 import json
 import re
 import shutil
@@ -18,6 +19,23 @@ SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FORBIDDEN_TAGS = {"html", "head", "body", "style", "script", "form", "iframe"}
 QUESTION_TYPES = {"single_choice", "multiple_choice", "ordering", "free_response"}
 MERMAID_RENDERER = Path(__file__).resolve().parents[3] / "agent-runtime" / "render-mermaid.mjs"
+CODE_RENDERER = Path(__file__).resolve().parents[3] / "agent-runtime" / "render-code.mjs"
+CODE_BLOCK = re.compile(
+    r'<pre><code class="language-([a-z0-9_+-]+)">(.*?)</code></pre>',
+    flags=re.IGNORECASE | re.DOTALL,
+)
+CODE_MARKER = re.compile(
+    r'<code\b[^>]*\bclass=["\'][^"\']*\blanguage-',
+    flags=re.IGNORECASE,
+)
+YOUTUBE_BLOCK = re.compile(
+    r'<div class="youtube-video" data-video-id="([A-Za-z0-9_-]{11})" '
+    r'data-title="([^"\n]{1,160})"(?: data-start="([0-9]{1,6})")?></div>',
+)
+YOUTUBE_MARKER = re.compile(
+    r'<div\b[^>]*\bclass=["\'][^"\']*\byoutube-video\b',
+    flags=re.IGNORECASE,
+)
 SLOP_PUNCTUATION = {
     "—": "em dash",
     "–": "en dash",
@@ -76,19 +94,20 @@ class LessonParser(HTMLParser):
             self._mermaid_parts.append(data)
 
 
-def validate_mermaid(source: str, path: Path, index: int, errors: list[str]) -> None:
-    label = f"{path} Mermaid block {index}"
-    if not source:
-        errors.append(f"{label} is empty")
-        return
+def validate_renderer(
+    renderer: Path,
+    payload: dict[str, str],
+    label: str,
+    errors: list[str],
+) -> None:
     node = shutil.which("node")
-    if node is None or not MERMAID_RENDERER.is_file():
-        errors.append(f"{label} cannot be checked because the Mermaid renderer is unavailable; run scripts/setup.sh")
+    if node is None or not renderer.is_file():
+        errors.append(f"{label} cannot be checked because its renderer is unavailable; run scripts/setup.sh")
         return
     try:
         completed = subprocess.run(
-            [node, str(MERMAID_RENDERER)],
-            input=json.dumps({"source": source}),
+            [node, str(renderer)],
+            input=json.dumps(payload),
             capture_output=True,
             check=False,
             text=True,
@@ -110,6 +129,43 @@ def validate_mermaid(source: str, path: Path, index: int, errors: list[str]) -> 
         return
     if message := payload.get("error"):
         errors.append(f"{label} is invalid: {message}")
+
+
+def validate_mermaid(source: str, path: Path, index: int, errors: list[str]) -> None:
+    label = f"{path} Mermaid block {index}"
+    if not source:
+        errors.append(f"{label} is empty")
+        return
+    validate_renderer(MERMAID_RENDERER, {"source": source}, label, errors)
+
+
+def validate_code_blocks(source_html: str, path: Path, errors: list[str]) -> None:
+    blocks = list(CODE_BLOCK.finditer(source_html))
+    if len(blocks) != len(CODE_MARKER.findall(source_html)):
+        errors.append(
+            f'{path} must wrap highlighted code exactly as <pre><code class="language-NAME">...</code></pre>'
+        )
+    for index, block in enumerate(blocks, start=1):
+        language, source = block.groups()
+        validate_renderer(
+            CODE_RENDERER,
+            {"source": html.unescape(source), "language": language.lower()},
+            f"{path} highlighted code block {index}",
+            errors,
+        )
+
+
+def validate_youtube_blocks(source_html: str, path: Path, errors: list[str]) -> None:
+    blocks = list(YOUTUBE_BLOCK.finditer(source_html))
+    markers = YOUTUBE_MARKER.findall(source_html)
+    if len(blocks) != len(markers):
+        errors.append(
+            f'{path} has invalid YouTube markup; use the exact <div class="youtube-video" ...></div> form'
+        )
+    for index, block in enumerate(blocks, start=1):
+        start = block.group(3)
+        if start is not None and int(start) > 86400:
+            errors.append(f"{path} YouTube block {index} data-start must not exceed 86400 seconds")
 
 
 def read_json(path: Path, errors: list[str]) -> dict[str, Any] | None:
@@ -181,6 +237,8 @@ def validate_lesson(path: Path, errors: list[str]) -> None:
         errors.append(f'{path} must use the exact Mermaid opening tag <pre class="mermaid">')
     for index, source in enumerate(parser.mermaid_sources, start=1):
         validate_mermaid(source, path, index, errors)
+    validate_code_blocks(html, path, errors)
+    validate_youtube_blocks(html, path, errors)
 
 
 def validate_unslop_punctuation(root: Path, errors: list[str]) -> None:
