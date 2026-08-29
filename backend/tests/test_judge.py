@@ -28,17 +28,18 @@ def test_tutor_agent_edits_only_staged_course_assets(tmp_path: Path, monkeypatch
     quiz = store.quiz(course.id, lesson.id)
     observed: dict[str, object] = {}
 
-    async def complete(_self, _prompt, *, workspace=None, mode="read-only"):
+    async def complete(_self, prompt, *, workspace=None, mode="read-only"):
         assert workspace is not None
         observed["workspace"] = workspace
         observed["mode"] = mode
+        observed["prompt"] = prompt
         lesson_path = workspace / "lesson.html"
         quiz_path = workspace / "quiz.json"
         lesson_path.write_text(lesson_path.read_text() + "\n<p>Added by the tutor.</p>\n")
         quiz_payload = json.loads(quiz_path.read_text())
         quiz_payload["title"] = "Expanded protocol boundary check"
         quiz_path.write_text(json.dumps(quiz_payload))
-        return "I expanded the chapter and its quiz."
+        return "```html\n<p>This deliberately oversized inline replacement must not reach chat.</p>\n```"
 
     service = JudgeService(tmp_path)
     monkeypatch.setattr(
@@ -66,6 +67,9 @@ def test_tutor_agent_edits_only_staged_course_assets(tmp_path: Path, monkeypatch
 
     assert observed["mode"] == "agent"
     assert str(observed["workspace"]).startswith(str(tmp_path / ".socraites-agent"))
+    assert "Teach Socratically in short turns" in str(observed["prompt"])
+    assert "Never paste a complete lesson" in str(observed["prompt"])
     assert "Added by the tutor" in reply.lesson_html
     assert json.loads(reply.quiz_json)["title"] == "Expanded protocol boundary check"
-    assert reply.text == "I expanded the chapter and its quiz."
+    assert reply.text.startswith("Updated the lesson and quiz directly.")
+    assert "```" not in reply.text

@@ -288,7 +288,7 @@ function TutorPanel({
         {loading ? (
           <div className="tutor-empty"><p>Loading your conversation…</p></div>
         ) : turns.length === 0 && !pendingMessage ? (
-          <div className="tutor-empty"><span aria-hidden="true">✦</span><strong>Ask about this chapter</strong><p>I can explain an idea another way, give an example, or help you reason through a quiz answer.</p></div>
+          <div className="tutor-empty"><span aria-hidden="true">✦</span><strong>Reason it through together</strong><p>I’ll ask focused questions, offer small hints, or edit this lesson when you explicitly ask.</p></div>
         ) : (
           <>
             {turns.map((turn) => (
@@ -317,7 +317,7 @@ function TutorPanel({
           aria-label="Message the lesson tutor"
           disabled={!enabled || sending}
           maxLength={6000}
-          placeholder={enabled ? "Ask for an explanation, example, or hint…" : "Codex ACP is required for the tutor."}
+          placeholder={enabled ? "Ask a question or request a lesson edit…" : "Codex ACP is required for the tutor."}
           rows={4}
           value={message}
           onChange={(event) => setMessage(event.target.value)}
