@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "id": "jobs-and-data-check",
+  "title": "Can you connect jobs and data?",
+  "passing_score": 0.75,
+  "questions": [
+    {
+      "id": "parallel-jobs",
+      "type": "single_choice",
+      "prompt": "A workflow has test and lint jobs with no needs keys. What should you expect?",
+      "points": 2,
+      "options": [
+        {"id": "parallel", "label": "GitHub may run them in parallel"},
+        {"id": "written-order", "label": "GitHub must run them in the order written"},
+        {"id": "same-runner", "label": "GitHub must place both on the same runner"}
+      ],
+      "correct_option_ids": ["parallel"],
+      "explanation": "Jobs are independent by default, so GitHub may schedule them concurrently on separate runners."
+    },
+    {
+      "id": "fan-in",
+      "type": "ordering",
+      "prompt": "Order the dependency flow for a workflow where deployment requires both tests and linting.",
+      "points": 3,
+      "options": [
+        {"id": "start", "label": "The workflow starts test and lint independently"},
+        {"id": "complete", "label": "Both test and lint complete successfully"},
+        {"id": "deploy", "label": "The deploy job with needs: [test, lint] starts"}
+      ],
+      "correct_order": ["start", "complete", "deploy"],
+      "explanation": "Independent checks can fan out, while needs creates the join that deployment must wait for."
+    },
+    {
+      "id": "data-mechanisms",
+      "type": "multiple_choice",
+      "prompt": "Which data choices fit their stated purpose? Select all that apply.",
+      "points": 4,
+      "options": [
+        {"id": "job-output", "label": "Use a job output for a small version string needed by another job"},
+        {"id": "artifact", "label": "Use an artifact for built files needed by a later job"},
+        {"id": "cache", "label": "Use a cache to speed repeated dependency installation"},
+        {"id": "cache-release", "label": "Use a cache as the durable record of released files"}
+      ],
+      "correct_option_ids": ["job-output", "artifact", "cache"],
+      "explanation": "Outputs carry small values, artifacts preserve files, and caches accelerate recomputation. A cache is not durable result storage."
+    },
+    {
+      "id": "matrix-purpose",
+      "type": "single_choice",
+      "prompt": "When is a matrix a good fit?",
+      "points": 2,
+      "options": [
+        {"id": "variants", "label": "The same test steps must run against Node 22 and Node 24"},
+        {"id": "unrelated", "label": "Three unrelated jobs need entirely different commands"},
+        {"id": "manual", "label": "An operator must type a deployment approval"}
+      ],
+      "correct_option_ids": ["variants"],
+      "explanation": "A matrix expands one stable job definition across systematic input variants such as runtime versions or operating systems."
+    },
+    {
+      "id": "pipeline-design",
+      "type": "free_response",
+      "prompt": "Design a build and deploy flow that passes version 1.4.0 and a dist directory from one job to another.",
+      "points": 5,
+      "rubric": "Credit answers that make deploy depend on build, expose the version as a job output, upload dist as an artifact in build, and download that artifact in deploy. The answer should not assume a shared filesystem.",
+      "reference_answer": "The build job creates dist, writes 1.4.0 as a step output, maps it to a job output, and uploads dist as an artifact. The deploy job declares needs: build, reads the version through needs.build.outputs, and downloads the artifact before publishing it.",
+      "explanation": "Small values and files cross job boundaries through explicit mechanisms because the two jobs may run on different machines."
+    },
+    {
+      "id": "cache-distinction",
+      "type": "single_choice",
+      "prompt": "A teammate wants the deploy job to retrieve the exact site produced by build. Which mechanism should hold the site?",
+      "points": 2,
+      "options": [
+        {"id": "artifact", "label": "An uploaded artifact"},
+        {"id": "cache", "label": "A dependency cache"},
+        {"id": "env", "label": "A same-job environment variable"}
+      ],
+      "correct_option_ids": ["artifact"],
+      "explanation": "An artifact transfers and preserves the exact build files. A cache is an optimization and a same-job environment variable cannot hold a directory for another job."
+    },
+    {
+      "id": "job-data-paragraph",
+      "type": "fill_paragraph",
+      "prompt": "Jobs without needs may run {{job-timing}}. Use a {{small-value}} for a version string, an {{exact-files}} for built files, and a {{recompute-speed}} to speed repeated dependency work.",
+      "points": 4,
+      "blanks": [
+        {
+          "id": "job-timing",
+          "options": [
+            {"id": "parallel", "label": "in parallel"},
+            {"id": "written-order", "label": "in written order"},
+            {"id": "same-runner", "label": "on the same runner"},
+            {"id": "manual-order", "label": "only after approval"}
+          ],
+          "correct_option_id": "parallel"
+        },
+        {
+          "id": "small-value",
+          "options": [
+            {"id": "job-output", "label": "job output"},
+            {"id": "runner-image", "label": "runner image"},
+            {"id": "path-filter", "label": "path filter"},
+            {"id": "schedule", "label": "schedule"}
+          ],
+          "correct_option_id": "job-output"
+        },
+        {
+          "id": "exact-files",
+          "options": [
+            {"id": "artifact", "label": "artifact"},
+            {"id": "environment", "label": "environment variable"},
+            {"id": "event", "label": "event payload"},
+            {"id": "permission", "label": "token permission"}
+          ],
+          "correct_option_id": "artifact"
+        },
+        {
+          "id": "recompute-speed",
+          "options": [
+            {"id": "cache", "label": "cache"},
+            {"id": "secret", "label": "secret"},
+            {"id": "job-name", "label": "job name"},
+            {"id": "reviewer", "label": "reviewer"}
+          ],
+          "correct_option_id": "cache"
+        }
+      ],
+      "explanation": "Independent jobs may run in parallel. Outputs carry small values, artifacts carry exact files, and caches reduce repeated work."
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "id": "first-ci-workflow-check",
+  "title": "Can you read a CI workflow?",
+  "passing_score": 0.75,
+  "questions": [
+    {
+      "id": "workflow-location",
+      "type": "single_choice",
+      "prompt": "Which path is a valid location for a repository workflow file?",
+      "points": 2,
+      "options": [
+        {"id": "correct", "label": ".github/workflows/ci.yml"},
+        {"id": "root", "label": "ci.yml at the repository root"},
+        {"id": "actions", "label": ".github/actions/ci.yml"}
+      ],
+      "correct_option_ids": ["correct"],
+      "explanation": "GitHub loads workflow YAML files from the .github/workflows directory."
+    },
+    {
+      "id": "yaml-behavior",
+      "type": "multiple_choice",
+      "prompt": "Which key-to-behavior mappings are correct? Select all that apply.",
+      "points": 3,
+      "options": [
+        {"id": "on-event", "label": "on selects events that can create a run"},
+        {"id": "runs-runner", "label": "runs-on selects the runner image for a job"},
+        {"id": "uses-action", "label": "uses invokes a reusable action"},
+        {"id": "run-trigger", "label": "run selects the repository event"}
+      ],
+      "correct_option_ids": ["on-event", "runs-runner", "uses-action"],
+      "explanation": "The on block selects triggers, runs-on configures a runner, and uses invokes an action. A run step executes a shell command."
+    },
+    {
+      "id": "node-ci-order",
+      "type": "ordering",
+      "prompt": "Order the steps in a basic Node CI job.",
+      "points": 3,
+      "options": [
+        {"id": "checkout", "label": "Check out the repository"},
+        {"id": "setup", "label": "Set up the requested Node version"},
+        {"id": "install", "label": "Install locked dependencies with npm ci"},
+        {"id": "test", "label": "Run npm test"}
+      ],
+      "correct_order": ["checkout", "setup", "install", "test"],
+      "explanation": "The runner first obtains the code and runtime, then installs dependencies and runs the tests."
+    },
+    {
+      "id": "timeout-purpose",
+      "type": "single_choice",
+      "prompt": "What problem does timeout-minutes address?",
+      "points": 2,
+      "options": [
+        {"id": "stuck", "label": "It stops a stuck job after a defined limit"},
+        {"id": "syntax", "label": "It repairs invalid YAML"},
+        {"id": "permissions", "label": "It grants the token write access"}
+      ],
+      "correct_option_ids": ["stuck"],
+      "explanation": "A job timeout limits wasted runner time when a command hangs or never finishes."
+    },
+    {
+      "id": "failure-experiment",
+      "type": "free_response",
+      "prompt": "Describe a safe experiment that proves a new CI workflow reports both failure and recovery.",
+      "points": 4,
+      "rubric": "Credit answers that use a disposable or safe repository, deliberately create a known test failure, inspect the failed run or log, restore the test, and confirm a later passing run.",
+      "reference_answer": "In a disposable repository, commit the workflow and confirm it runs. Introduce one known failing assertion, push it, and inspect the failed test step in the Actions log. Restore the assertion, push again, and confirm the new run succeeds.",
+      "explanation": "A controlled failure verifies that the workflow catches real defects and that its logs lead to the failing command."
+    },
+    {
+      "id": "first-workflow-scope",
+      "type": "single_choice",
+      "prompt": "What is the best starting point for a first CI workflow?",
+      "points": 2,
+      "options": [
+        {"id": "known-check", "label": "Automate a test command the project already runs locally"},
+        {"id": "new-platform", "label": "Design a new build system inside the workflow"},
+        {"id": "broad-token", "label": "Grant broad write permissions before adding any steps"}
+      ],
+      "correct_option_ids": ["known-check"],
+      "explanation": "A first workflow should reproduce a known local check on a clean runner, which makes failures easier to interpret."
+    },
+    {
+      "id": "ci-file-paragraph",
+      "type": "fill_paragraph",
+      "prompt": "GitHub reads workflow files from {{workflow-directory}}. In the test job, {{checkout-step}} places the code on the runner before {{test-command}} runs.",
+      "points": 3,
+      "blanks": [
+        {
+          "id": "workflow-directory",
+          "options": [
+            {"id": "workflows", "label": ".github/workflows/"},
+            {"id": "actions", "label": ".github/actions/"},
+            {"id": "root", "label": "the repository root"},
+            {"id": "node-modules", "label": "node_modules/"}
+          ],
+          "correct_option_id": "workflows"
+        },
+        {
+          "id": "checkout-step",
+          "options": [
+            {"id": "checkout", "label": "actions/checkout"},
+            {"id": "setup-node", "label": "actions/setup-node"},
+            {"id": "workflow-dispatch", "label": "workflow_dispatch"},
+            {"id": "runs-on", "label": "runs-on"}
+          ],
+          "correct_option_id": "checkout"
+        },
+        {
+          "id": "test-command",
+          "options": [
+            {"id": "npm-test", "label": "npm test"},
+            {"id": "checkout-command", "label": "git checkout"},
+            {"id": "trigger-command", "label": "pull_request"},
+            {"id": "runner-command", "label": "ubuntu-latest"}
+          ],
+          "correct_option_id": "npm-test"
+        }
+      ],
+      "explanation": "The workflow belongs under .github/workflows, checkout obtains the code, and the test command runs after setup."
+    }
+  ]
+}

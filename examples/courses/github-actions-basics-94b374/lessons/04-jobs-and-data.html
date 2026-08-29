@@ -1,0 +1,25 @@
+<p class="eyebrow">Lesson 4 · Job graph</p>
+<h1>Connect work without assuming a shared machine.</h1>
+<p class="lead">Jobs can run in parallel, wait for one another, and exchange selected data. Those boundaries make a workflow faster and easier to reason about.</p>
+
+<h2>Add dependencies only where they are real</h2>
+<p>Jobs run independently unless <code>needs</code> adds an edge. A deployment that consumes a tested build should wait for the build. Linting and unit tests often have no reason to wait for each other.</p>
+<details><summary>Example: fan out and join</summary><div><p><code>test</code> and <code>lint</code> start together. A <code>deploy</code> job with <code>needs: [test, lint]</code> starts only after both succeed.</p></div></details>
+
+<h2>Choose the data mechanism by what crosses the boundary</h2>
+<table>
+  <thead><tr><th>Need</th><th>Mechanism</th></tr></thead>
+  <tbody>
+    <tr><td>Value for a later step in the same job</td><td><code>$GITHUB_OUTPUT</code> or <code>$GITHUB_ENV</code></td></tr>
+    <tr><td>Small value for another job</td><td>Job output</td></tr>
+    <tr><td>Files for another job or later inspection</td><td>Artifact</td></tr>
+    <tr><td>Faster repeated dependency work</td><td>Cache</td></tr>
+  </tbody>
+</table>
+<details><summary>Example: pass a version and a built site</summary><div><p>The build job exposes version <code>1.4.0</code> as a job output and uploads <code>dist/</code> as an artifact. The deploy job reads the small value and downloads the exact files.</p></div></details>
+
+<h2>Use a matrix for systematic variants</h2>
+<p>A matrix expands one job definition into several jobs. Use it when the commands stay the same but an input such as operating system or language version changes.</p>
+<details><summary>Example: test two Node versions</summary><div><p><code>matrix.node: [22, 24]</code> creates two test jobs. Each job uses <code>${{ matrix.node }}</code> during setup, so the same test sequence checks both runtimes.</p></div></details>
+
+<div class="concept"><p><strong>Do not confuse cache with result storage.</strong> Cache makes recomputation faster. An artifact preserves the files a later job or person needs.</p></div>

@@ -1,0 +1,22 @@
+<p class="eyebrow">Lesson 3 · Triggers</p>
+<h1>Run the right workflow at the right time.</h1>
+<p class="lead">The best job definition is useless if its event never matches. Choose the trigger from who or what should start the work.</p>
+
+<h2>Use repository events for repository activity</h2>
+<p><code>push</code>, <code>pull_request</code>, and <code>release</code> react to activity GitHub already knows about. Pick the event whose payload and timing match the work, not merely the event that is easiest to remember.</p>
+<details><summary>Example: test before merge</summary><div><p>Use <code>pull_request</code> for checks that should update as a proposed change evolves. Use a filtered <code>push</code> to run a separate check only after commits land on <code>main</code>.</p></div></details>
+
+<h2>Use manual triggers for operator choices</h2>
+<p><code>workflow_dispatch</code> lets a person or API start one named workflow. It can accept inputs such as a target environment. A schedule is better for periodic work that does not need an operator at the keyboard.</p>
+<details><summary>Example: choose a deployment target</summary><div><p>An operator starts <code>deploy.yml</code> from the Actions tab and selects <code>staging</code>. The workflow reads that typed input instead of guessing the target from a branch name.</p></div></details>
+
+<h2>Filters remove runs before jobs exist</h2>
+<p>Branch, tag, path, and activity filters narrow an event. If no run appears, inspect the <code>on</code> block and its filters first. Runner and step logs cannot explain a run that GitHub never created.</p>
+<details><summary>Example: a path filter explains missing CI</summary><div><p>A workflow only includes <code>src/**</code>, but a pull request changes <code>docs/guide.md</code>. GitHub does not create the run because the changed path does not match.</p></div></details>
+
+<div class="trace">
+  <div><b>No run exists</b><br>Check event, filters, file location, and YAML validity.</div>
+  <div><b>A run exists</b><br>Then inspect job scheduling and step logs.</div>
+</div>
+
+<div class="concept"><p><strong>Debug the earliest missing object.</strong> Confirm the run exists before investigating its jobs, runners, or commands.</p></div>

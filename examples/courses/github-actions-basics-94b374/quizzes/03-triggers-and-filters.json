@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "id": "triggers-and-filters-check",
+  "title": "Can you choose the right trigger?",
+  "passing_score": 0.75,
+  "questions": [
+    {
+      "id": "pr-trigger",
+      "type": "single_choice",
+      "prompt": "Which trigger best fits checks that should update while a proposed change evolves?",
+      "points": 2,
+      "options": [
+        {"id": "pull-request", "label": "pull_request"},
+        {"id": "schedule", "label": "schedule"},
+        {"id": "manual", "label": "workflow_dispatch only"}
+      ],
+      "correct_option_ids": ["pull-request"],
+      "explanation": "The pull_request event follows activity on a proposed change and can report checks on that pull request."
+    },
+    {
+      "id": "manual-input",
+      "type": "single_choice",
+      "prompt": "An operator should choose staging or production when starting deployment. Which trigger fits best?",
+      "points": 2,
+      "options": [
+        {"id": "dispatch", "label": "workflow_dispatch with a target input"},
+        {"id": "push-all", "label": "push on every branch"},
+        {"id": "schedule", "label": "schedule with no inputs"}
+      ],
+      "correct_option_ids": ["dispatch"],
+      "explanation": "workflow_dispatch supports an operator-started run and declared inputs such as the target environment."
+    },
+    {
+      "id": "missing-run-causes",
+      "type": "multiple_choice",
+      "prompt": "No workflow run exists for a documentation-only pull request. Which checks belong first? Select all that apply.",
+      "points": 3,
+      "options": [
+        {"id": "event", "label": "Whether the on block includes the actual event"},
+        {"id": "paths", "label": "Whether path filters include the changed files"},
+        {"id": "yaml", "label": "Whether the workflow file and YAML are valid"},
+        {"id": "step-log", "label": "The output of a test step that never ran"}
+      ],
+      "correct_option_ids": ["event", "paths", "yaml"],
+      "explanation": "When no run exists, investigate trigger selection, filters, file placement, and YAML validity before job or step details."
+    },
+    {
+      "id": "debug-order",
+      "type": "ordering",
+      "prompt": "Order these checks from earliest to latest in the workflow lifecycle.",
+      "points": 3,
+      "options": [
+        {"id": "run", "label": "Confirm that the event created a run"},
+        {"id": "job", "label": "Confirm that the job scheduled"},
+        {"id": "step", "label": "Inspect the failed step log"}
+      ],
+      "correct_order": ["run", "job", "step"],
+      "explanation": "A job cannot schedule until a run exists, and a step cannot fail until its job begins."
+    },
+    {
+      "id": "trigger-design",
+      "type": "free_response",
+      "prompt": "Design triggers for a repository that should test pull requests, test commits after they reach main, and let an operator start a staging deployment.",
+      "points": 4,
+      "rubric": "Credit answers that choose pull_request for proposed changes, a push trigger filtered to main for landed commits, and workflow_dispatch with a staging input or staging-specific workflow for the operator action.",
+      "reference_answer": "Use pull_request for the change checks. Add push with branches: [main] for commits that land on main. Define deployment with workflow_dispatch and a constrained environment input that includes staging.",
+      "explanation": "Each trigger should match the actor and timing of the work instead of forcing unrelated events into one pattern."
+    },
+    {
+      "id": "filter-effects",
+      "type": "multiple_choice",
+      "prompt": "Which filters can narrow when a repository event creates a run? Select all that apply.",
+      "points": 2,
+      "options": [
+        {"id": "branch", "label": "Branch filters"},
+        {"id": "path", "label": "Path filters"},
+        {"id": "activity", "label": "Event activity types"},
+        {"id": "runner-log", "label": "Text found in a runner log"}
+      ],
+      "correct_option_ids": ["branch", "path", "activity"],
+      "explanation": "Branch, path, tag, and activity filters affect event matching. Runner logs exist only after a run and job begin."
+    },
+    {
+      "id": "trigger-choice-paragraph",
+      "type": "fill_paragraph",
+      "prompt": "Use {{pull-request-trigger}} to test a proposed change and {{manual-trigger}} when an operator should start a run. If no run exists, inspect {{event-filters}} before runner logs.",
+      "points": 3,
+      "blanks": [
+        {
+          "id": "pull-request-trigger",
+          "options": [
+            {"id": "pull-request", "label": "pull_request"},
+            {"id": "schedule", "label": "schedule"},
+            {"id": "release", "label": "release"},
+            {"id": "workflow-call", "label": "workflow_call"}
+          ],
+          "correct_option_id": "pull-request"
+        },
+        {
+          "id": "manual-trigger",
+          "options": [
+            {"id": "workflow-dispatch", "label": "workflow_dispatch"},
+            {"id": "push", "label": "push"},
+            {"id": "pull-request-target", "label": "pull_request_target"},
+            {"id": "workflow-run", "label": "workflow_run"}
+          ],
+          "correct_option_id": "workflow-dispatch"
+        },
+        {
+          "id": "event-filters",
+          "options": [
+            {"id": "on-filters", "label": "the on block and its filters"},
+            {"id": "step-output", "label": "the final step output"},
+            {"id": "runner-disk", "label": "the runner filesystem"},
+            {"id": "artifact-log", "label": "a downloaded artifact"}
+          ],
+          "correct_option_id": "on-filters"
+        }
+      ],
+      "explanation": "Pull requests fit proposed-change checks, workflow_dispatch fits operator starts, and missing runs are trigger or filter problems."
+    }
+  ]
+}

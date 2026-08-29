@@ -1,0 +1,24 @@
+<p class="eyebrow">Lesson 5 · Operations</p>
+<h1>Limit power and make failures explain themselves.</h1>
+<p class="lead">A workflow runs code with access to a repository and sometimes other systems. Safe permissions and layered debugging belong in the first version, not a later cleanup.</p>
+
+<h2>Grant the built-in token only what the job needs</h2>
+<p>Declare <code>permissions</code> instead of relying on a broad default. Start with no permission or read-only repository contents, then add a specific write permission only to the job that performs that operation.</p>
+<details><summary>Example: tests only read the repository</summary><div><p>A test job uses <code>permissions: { contents: read }</code>. It can check out the code but cannot create releases or modify issues with its built-in token.</p></div></details>
+
+<h2>Treat outside values and code as untrusted</h2>
+<p>Pull request titles, branch names, issue text, forked code, artifacts, and caches may be attacker-controlled. Pass text as quoted data instead of inserting expressions into shell source. Review third-party actions and pin sensitive workflows to verified commit SHAs.</p>
+<details><summary>Example: keep a title out of shell source</summary><div><p>Put the pull request title in an environment variable and pass the quoted variable to a program. Do not paste the title expression directly into a shell command where punctuation could become syntax.</p></div></details>
+
+<h2>Debug from trigger to side effect</h2>
+<p>Ask four questions in order: Was a run created? Did the job schedule? Which step failed? Did the external system perform the intended change? This separates trigger mistakes from runner, command, permission, and provider failures.</p>
+<details><summary>Example: a job waits without starting</summary><div><p>The run exists, but the job remains queued. Inspect its runner label and availability before changing the shell command, because no step has executed yet.</p></div></details>
+
+<div class="trace">
+  <div><b>Run</b><br>Event and filters matched.</div>
+  <div><b>Job</b><br>Dependencies passed and a runner accepted it.</div>
+  <div><b>Step</b><br>The command or action returned a result.</div>
+  <div><b>Side effect</b><br>The target system changed as intended.</div>
+</div>
+
+<div class="concept"><p><strong>Put evidence near the failure.</strong> Use clear names, timeouts, concise summaries, and uploaded reports so the next person can identify the failed layer quickly.</p></div>

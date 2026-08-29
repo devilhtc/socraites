@@ -1,0 +1,40 @@
+<p class="eyebrow">Lesson 2 · First workflow</p>
+<h1>Turn a small YAML file into repeatable CI.</h1>
+<p class="lead">A useful first workflow checks every pull request and main-branch push with the same install and test commands.</p>
+
+<h2>Put the file where GitHub looks</h2>
+<p>Create <code>.github/workflows/ci.yml</code>. The filename is for humans; the keys inside define the workflow's display name, triggers, permissions, and jobs.</p>
+<details><summary>Example: two workflow files stay independent</summary><div><p><code>ci.yml</code> can test each change while <code>release.yml</code> publishes tagged releases. Both live under <code>.github/workflows/</code>, and each declares its own triggers and jobs.</p></div></details>
+
+<h2>Connect each YAML key to behavior</h2>
+<pre><code class="language-yaml">name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test</code></pre>
+<p><code>runs-on</code> selects the runner image. The two <code>uses</code> steps reuse actions for checkout and Node setup. The <code>run</code> steps execute project commands. The timeout prevents a stuck job from running forever.</p>
+<details><summary>Example: a failed test stops the job</summary><div><p>If <code>npm test</code> exits with a nonzero status, the step and job fail. GitHub reports the failed check on the pull request so the author can open its logs.</p></div></details>
+
+<h2>Prove the workflow by observing it</h2>
+<p>Push the file to a disposable repository. Open the Actions tab, inspect the job and step list, then deliberately break one test. The failed run teaches more than reading the YAML alone.</p>
+<details><summary>Example: a safe first experiment</summary><div><p>Add an assertion that is known to fail, push it, and find the exact failing command in the run log. Restore the assertion, push again, and confirm that the new run passes.</p></div></details>
+
+<div class="concept"><p><strong>A workflow should reproduce a local check.</strong> Start with commands the project already uses, then automate them on a clean runner.</p></div>

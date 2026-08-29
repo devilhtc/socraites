@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "id": "safe-and-debuggable-check",
+  "title": "Can you operate a workflow safely?",
+  "passing_score": 0.75,
+  "questions": [
+    {
+      "id": "test-permission",
+      "type": "single_choice",
+      "prompt": "A job only checks out code and runs tests. Which built-in token permission is the better starting point?",
+      "points": 2,
+      "options": [
+        {"id": "read", "label": "contents: read"},
+        {"id": "write-all", "label": "write-all"},
+        {"id": "release", "label": "A release write permission"}
+      ],
+      "correct_option_ids": ["read"],
+      "explanation": "A test job normally needs to read repository contents but does not need broad write access."
+    },
+    {
+      "id": "untrusted-values",
+      "type": "multiple_choice",
+      "prompt": "Which values or objects should a workflow treat as potentially untrusted? Select all that apply.",
+      "points": 3,
+      "options": [
+        {"id": "title", "label": "A pull request title"},
+        {"id": "fork-code", "label": "Code from a forked pull request"},
+        {"id": "artifact", "label": "An artifact produced by another trust context"},
+        {"id": "literal", "label": "A fixed string written directly by the workflow author"}
+      ],
+      "correct_option_ids": ["title", "fork-code", "artifact"],
+      "explanation": "User-controlled text, forked code, and transferred files can carry attacker input. A fixed workflow literal does not have the same external origin."
+    },
+    {
+      "id": "shell-data",
+      "type": "single_choice",
+      "prompt": "How should a workflow safely pass a pull request title to a command?",
+      "points": 3,
+      "options": [
+        {"id": "env", "label": "Store it in an environment variable and pass the quoted value as data"},
+        {"id": "inline", "label": "Insert the expression directly into shell source"},
+        {"id": "permission", "label": "Grant contents: write before using the title"}
+      ],
+      "correct_option_ids": ["env"],
+      "explanation": "Separating untrusted text from shell source reduces the chance that punctuation in the value becomes executable syntax."
+    },
+    {
+      "id": "diagnostic-order",
+      "type": "ordering",
+      "prompt": "Order the layers to inspect when a workflow should update an external service.",
+      "points": 4,
+      "options": [
+        {"id": "run", "label": "Confirm that a workflow run exists"},
+        {"id": "job", "label": "Confirm that the relevant job scheduled"},
+        {"id": "step", "label": "Inspect the command or action result"},
+        {"id": "effect", "label": "Verify the external side effect"}
+      ],
+      "correct_order": ["run", "job", "step", "effect"],
+      "explanation": "Each layer depends on the prior one, while a successful step still does not prove the external system changed correctly."
+    },
+    {
+      "id": "least-privilege-design",
+      "type": "free_response",
+      "prompt": "A workflow has a test job and a release job. Explain how you would apply least privilege to their built-in tokens.",
+      "points": 5,
+      "rubric": "Credit answers that give the test job only read access or no unnecessary token rights, place release write permission only on the release job, and avoid granting broad workflow-wide rights merely for convenience.",
+      "reference_answer": "Set minimal workflow defaults, such as contents: read or permissions: {}. Keep the test job read-only. Add only the specific write permission needed for publishing to the release job, so a compromised test step cannot use release authority.",
+      "explanation": "Job-scoped permission limits keep elevated authority out of jobs that do not need it."
+    },
+    {
+      "id": "debug-evidence",
+      "type": "multiple_choice",
+      "prompt": "Which practices make failures easier to diagnose? Select all that apply.",
+      "points": 3,
+      "options": [
+        {"id": "names", "label": "Give important jobs and steps descriptive names"},
+        {"id": "timeouts", "label": "Set reasonable job timeouts"},
+        {"id": "reports", "label": "Upload detailed reports as artifacts"},
+        {"id": "broad-token", "label": "Grant broad token rights so permission errors disappear"}
+      ],
+      "correct_option_ids": ["names", "timeouts", "reports"],
+      "explanation": "Names, time limits, summaries, and reports expose useful evidence. Broad permissions hide design mistakes and increase risk."
+    },
+    {
+      "id": "safe-debug-paragraph",
+      "type": "fill_paragraph",
+      "prompt": "A test job can start with {{read-permission}}. Treat {{outside-values}} as untrusted data, and begin debugging by checking {{run-layer}} before inspecting later layers.",
+      "points": 3,
+      "blanks": [
+        {
+          "id": "read-permission",
+          "options": [
+            {"id": "contents-read", "label": "contents: read"},
+            {"id": "write-all", "label": "write-all"},
+            {"id": "actions-write", "label": "actions: write"},
+            {"id": "packages-write", "label": "packages: write"}
+          ],
+          "correct_option_id": "contents-read"
+        },
+        {
+          "id": "outside-values",
+          "options": [
+            {"id": "fork-input", "label": "pull request titles and forked code"},
+            {"id": "fixed-literals", "label": "fixed workflow literals"},
+            {"id": "job-timeouts", "label": "declared job timeouts"},
+            {"id": "step-names", "label": "author-written step names"}
+          ],
+          "correct_option_id": "fork-input"
+        },
+        {
+          "id": "run-layer",
+          "options": [
+            {"id": "run-exists", "label": "whether a run exists"},
+            {"id": "provider-effect", "label": "the provider side effect"},
+            {"id": "final-step", "label": "the final step log"},
+            {"id": "artifact-content", "label": "the artifact contents"}
+          ],
+          "correct_option_id": "run-exists"
+        }
+      ],
+      "explanation": "Least privilege limits the test token, external values stay data rather than shell source, and debugging starts by confirming a run exists."
+    }
+  ]
+}

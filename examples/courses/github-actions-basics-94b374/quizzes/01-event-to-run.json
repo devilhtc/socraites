@@ -1,0 +1,133 @@
+{
+  "schema_version": 1,
+  "id": "event-to-run-check",
+  "title": "Can you trace a workflow run?",
+  "passing_score": 0.75,
+  "questions": [
+    {
+      "id": "workflow-created",
+      "type": "single_choice",
+      "prompt": "A pull request is opened and matches a workflow's on block. What does GitHub create first?",
+      "points": 2,
+      "options": [
+        {"id": "run", "label": "A workflow run based on the committed workflow file"},
+        {"id": "runner", "label": "A permanent runner stored in the repository"},
+        {"id": "action", "label": "A new reusable action"}
+      ],
+      "correct_option_ids": ["run"],
+      "explanation": "A matching event creates a workflow run. The run's jobs are then scheduled onto runners."
+    },
+    {
+      "id": "execution-order",
+      "type": "ordering",
+      "prompt": "Put the basic execution path in order.",
+      "points": 3,
+      "options": [
+        {"id": "event", "label": "A repository event matches the on block"},
+        {"id": "workflow", "label": "GitHub creates a workflow run"},
+        {"id": "job", "label": "A job is assigned to a runner"},
+        {"id": "steps", "label": "The runner executes the job's steps in order"}
+      ],
+      "correct_order": ["event", "workflow", "job", "steps"],
+      "explanation": "The event selects the workflow, the run contains jobs, and each scheduled job executes its ordered steps on one runner."
+    },
+    {
+      "id": "job-properties",
+      "type": "multiple_choice",
+      "prompt": "Which statements about jobs are correct? Select all that apply.",
+      "points": 3,
+      "options": [
+        {"id": "one-runner", "label": "One job runs on one runner"},
+        {"id": "parallel", "label": "Jobs without dependencies may run in parallel"},
+        {"id": "shared-disk", "label": "Every job automatically shares one filesystem"},
+        {"id": "ordered-jobs", "label": "All jobs always execute in the order written"}
+      ],
+      "correct_option_ids": ["one-runner", "parallel"],
+      "explanation": "A job uses one runner. Independent jobs may run concurrently and do not automatically share a filesystem."
+    },
+    {
+      "id": "step-kind",
+      "type": "single_choice",
+      "prompt": "Which step invokes a reusable action rather than a shell command?",
+      "points": 2,
+      "options": [
+        {"id": "uses", "label": "uses: actions/checkout@v7"},
+        {"id": "run", "label": "run: npm test"},
+        {"id": "runner", "label": "runs-on: ubuntu-latest"}
+      ],
+      "correct_option_ids": ["uses"],
+      "explanation": "A uses step invokes an action. A run step executes a shell command, while runs-on configures the job's runner."
+    },
+    {
+      "id": "parallel-explanation",
+      "type": "free_response",
+      "prompt": "A workflow has test and lint jobs with no needs relationship. Explain how GitHub may execute them and what they do not automatically share.",
+      "points": 4,
+      "rubric": "Credit answers that say the jobs may run in parallel, may use different runners, and do not automatically share a filesystem. Equivalent wording is acceptable.",
+      "reference_answer": "GitHub may schedule test and lint at the same time, potentially on separate runners. Each job has its own runner workspace, so files created by one job are not automatically present in the other.",
+      "explanation": "Jobs are separate scheduling and filesystem boundaries unless the workflow explicitly connects them."
+    },
+    {
+      "id": "checkout-sequence",
+      "type": "single_choice",
+      "prompt": "Why does a checkout step normally appear before a command that tests repository code?",
+      "points": 2,
+      "options": [
+        {"id": "files", "label": "Checkout places the repository files on the job's runner"},
+        {"id": "trigger", "label": "Checkout creates the pull request event"},
+        {"id": "parallel", "label": "Checkout forces all jobs to run in parallel"}
+      ],
+      "correct_option_ids": ["files"],
+      "explanation": "The test command needs the repository files in the runner workspace, so checkout must make them available first."
+    },
+    {
+      "id": "execution-path-paragraph",
+      "type": "fill_paragraph",
+      "prompt": "A matching {{event}} creates a workflow run. GitHub assigns each {{job}} to one {{runner}}, and that runner executes the job's {{steps}} in order.",
+      "points": 4,
+      "blanks": [
+        {
+          "id": "event",
+          "options": [
+            {"id": "event-choice", "label": "event"},
+            {"id": "branch-choice", "label": "branch name"},
+            {"id": "action-choice", "label": "action"},
+            {"id": "cache-choice", "label": "cache"}
+          ],
+          "correct_option_id": "event-choice"
+        },
+        {
+          "id": "job",
+          "options": [
+            {"id": "job-choice", "label": "job"},
+            {"id": "workflow-choice", "label": "workflow file"},
+            {"id": "step-choice", "label": "step"},
+            {"id": "secret-choice", "label": "secret"}
+          ],
+          "correct_option_id": "job-choice"
+        },
+        {
+          "id": "runner",
+          "options": [
+            {"id": "runner-choice", "label": "runner"},
+            {"id": "trigger-choice", "label": "trigger"},
+            {"id": "artifact-choice", "label": "artifact"},
+            {"id": "matrix-choice", "label": "matrix"}
+          ],
+          "correct_option_id": "runner-choice"
+        },
+        {
+          "id": "steps",
+          "options": [
+            {"id": "steps-choice", "label": "steps"},
+            {"id": "jobs-choice", "label": "jobs"},
+            {"id": "events-choice", "label": "events"},
+            {"id": "requests-choice", "label": "pull requests"}
+          ],
+          "correct_option_id": "steps-choice"
+        }
+      ],
+      "explanation": "A matching event creates the run, each job gets one runner, and the runner executes that job's steps in order."
+    }
+  ]
+}

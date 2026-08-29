@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "id": "github-actions-basics-94b374",
+  "title": "GitHub Actions Basics",
+  "category": "Software engineering",
+  "subtitle": "Read, write, and troubleshoot a small CI workflow.",
+  "description": "Learn how events create workflow runs, how jobs and steps execute, how data crosses job boundaries, and how to keep a first workflow safe and observable.",
+  "lessons": [
+    {
+      "id": "event-to-run",
+      "title": "From event to run",
+      "summary": "Build the core mental model: an event selects a workflow, jobs go to runners, and steps execute in order.",
+      "estimated_minutes": 8,
+      "lesson_file": "lessons/01-event-to-run.html",
+      "quiz_file": "quizzes/01-event-to-run.json"
+    },
+    {
+      "id": "first-ci-workflow",
+      "title": "Write a first CI workflow",
+      "summary": "Read a complete workflow file and connect each YAML key to what GitHub will do.",
+      "estimated_minutes": 12,
+      "lesson_file": "lessons/02-first-ci-workflow.html",
+      "quiz_file": "quizzes/02-first-ci-workflow.json"
+    },
+    {
+      "id": "triggers-and-filters",
+      "title": "Choose triggers and filters",
+      "summary": "Start workflows from repository activity or a manual request, then narrow when they should run.",
+      "estimated_minutes": 9,
+      "lesson_file": "lessons/03-triggers-and-filters.html",
+      "quiz_file": "quizzes/03-triggers-and-filters.json"
+    },
+    {
+      "id": "jobs-and-data",
+      "title": "Connect jobs and data",
+      "summary": "Control parallel work with dependencies and choose outputs, artifacts, or caches for different kinds of data.",
+      "estimated_minutes": 11,
+      "lesson_file": "lessons/04-jobs-and-data.html",
+      "quiz_file": "quizzes/04-jobs-and-data.json"
+    },
+    {
+      "id": "safe-and-debuggable",
+      "title": "Make workflows safe and debuggable",
+      "summary": "Limit token permissions, treat external values as untrusted, and diagnose failures from trigger to side effect.",
+      "estimated_minutes": 12,
+      "lesson_file": "lessons/05-safe-and-debuggable.html",
+      "quiz_file": "quizzes/05-safe-and-debuggable.json"
+    }
+  ]
+}

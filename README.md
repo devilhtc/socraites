@@ -38,6 +38,14 @@ Open <http://127.0.0.1:5173>.
 
 The first launch intentionally has an empty lesson library. `data/courses/` and `data/progress/` are created automatically and remain private to your machine. See [Create a course](#create-a-course) to add content.
 
+To try the bundled example course, copy it into your private course library before starting the app:
+
+```bash
+cp -R examples/courses/github-actions-basics-94b374 data/courses/
+```
+
+The example teaches GitHub Actions with a rendered Mermaid workflow, syntax-highlighted YAML, and an embedded video from GitHub's official YouTube channel.
+
 The backend listens on `127.0.0.1:8765`; the frontend development server listens on `127.0.0.1:5173`.
 
 ## Set up the Codex agent
@@ -153,6 +161,7 @@ backend/         FastAPI API, storage, grading, and tutor integration
 frontend/        React/Vite interface
 scripts/         setup, development, and test entry points
 skills/          reusable course-authoring guidance and validation
+examples/        committed sample courses that demonstrate supported lesson media
 data/            private courses and learner state; always gitignored
 ```
 
