@@ -15,6 +15,14 @@ COURSE_ID = re.compile(r"^[a-z][a-z0-9-]*-[a-f0-9]{6}$")
 SLUG = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 FORBIDDEN_TAGS = {"html", "head", "body", "style", "script", "form", "iframe"}
 QUESTION_TYPES = {"single_choice", "multiple_choice", "ordering", "free_response"}
+SLOP_PUNCTUATION = {
+    "—": "em dash",
+    "–": "en dash",
+    "“": "curly double quote",
+    "”": "curly double quote",
+    "‘": "curly single quote",
+    "’": "curly single quote",
+}
 
 
 class LessonParser(HTMLParser):
@@ -108,6 +116,18 @@ def validate_lesson(path: Path, errors: list[str]) -> None:
         errors.append(f"{path} needs at least 3 example details blocks; found {len(examples)}")
     if len(examples) < parser.h2_count:
         errors.append(f"{path} has fewer examples ({len(examples)}) than learning sections ({parser.h2_count})")
+    if re.search(r"<strong>[^<]+:</strong>", html):
+        errors.append(f"{path} uses a bold label ending in a colon; write the lead-in as a sentence")
+
+
+def validate_unslop_punctuation(root: Path, errors: list[str]) -> None:
+    for path in sorted(root.rglob("*")):
+        if path.suffix not in {".html", ".json"} or not path.is_file():
+            continue
+        text = path.read_text(encoding="utf-8")
+        found = sorted({label for mark, label in SLOP_PUNCTUATION.items() if mark in text})
+        if found:
+            errors.append(f"{path} contains unslopped punctuation: {', '.join(found)}")
 
 
 def option_ids(question: dict[str, Any], label: str, errors: list[str]) -> list[str]:
@@ -213,6 +233,7 @@ def validate_quiz(path: Path, errors: list[str]) -> None:
 def validate_course(root: Path) -> list[str]:
     errors: list[str] = []
     root = root.resolve()
+    validate_unslop_punctuation(root, errors)
     manifest = read_json(root / "course.json", errors)
     if manifest is None:
         return errors

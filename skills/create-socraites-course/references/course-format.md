@@ -51,12 +51,12 @@ Allowed presentation patterns include:
 ```html
 <p class="eyebrow">Lesson 1 · Core idea</p>
 <h1>The lesson's teaching headline.</h1>
-<p class="lead">A short orientation that explains why the idea matters.</p>
+<p class="lead">Name the problem this lesson will help the learner solve.</p>
 
 <h2>One learning point</h2>
 <p>Explain one idea in plain language before introducing exceptions or terminology.</p>
 
-<div class="concept"><p><strong>Rule:</strong> State a compact rule the learner can retrieve later.</p></div>
+<div class="concept"><p><strong>Make the decision explicit.</strong> State the rule the learner can apply later.</p></div>
 
 <div class="trace">
   <div><b>First interaction</b><br>Only the important detail.</div>
@@ -78,9 +78,26 @@ Quality requirements:
 - Use headings, paragraphs, lists, `code`, `pre`, `table`, `.concept`, `.trace`, and collapsible examples. Do not add inline styles.
 - Never include `<html>`, `<head>`, `<body>`, `<style>`, `<script>`, `<form>`, or `<iframe>`.
 
+## Prose and voice
+
+Apply the `unslop` skill when it is available. Use this checklist as the local fallback and as a final audit:
+
+- Write the concrete mechanism, decision, measurement, or consequence. Cut claims that could appear unchanged in an unrelated course.
+- Use plain words and active voice. Split any sentence that makes the reader backtrack.
+- Remove puffery, promotional copy, filler, vague attribution, generic conclusions, and canned chatbot phrases.
+- Avoid stock AI words such as `delve`, `pivotal`, `intricate`, `landscape`, `showcase`, `tapestry`, `underscore`, and `vibrant`.
+- Do not force points into groups of three or cycle through synonyms for the same concept.
+- Use sentence case headings. Do not decorate headings with emoji.
+- Do not use em dashes, en dashes, or curly quotes. Use straight quotes, commas, or separate sentences.
+- A bold lead-in may name a rule or concept, but write it as a sentence ending in a period. Avoid labels such as `<strong>Rule:</strong>` or `<strong>Checkpoint:</strong>`.
+- Vary sentence length. Let a short sentence carry an important distinction.
+- Add human judgment when the subject calls for it, but tie that judgment to a specific fact or tradeoff.
+
+Apply the same prose pass to `course.json` titles, summaries, and descriptions, plus every quiz prompt, option, explanation, rubric, and reference answer. Format correctness does not excuse generic writing.
+
 ## Quiz JSON
 
-Every lesson has one quiz with 5–7 questions. Use more than one question type when the material supports it. Total points may vary; `passing_score` is a fraction from 0 to 1.
+Every lesson has one quiz with 5 to 7 questions. Use more than one question type when the material supports it. Total points may vary; `passing_score` is a fraction from 0 to 1.
 
 Shared fields for every question:
 
@@ -107,7 +124,7 @@ Shared fields for every question:
 }
 ```
 
-Use 2–8 options and exactly one correct option ID.
+Use 2 to 8 options and exactly one correct option ID.
 
 ### Multiple choice
 
@@ -127,7 +144,7 @@ Use 2–8 options and exactly one correct option ID.
 }
 ```
 
-Use 2–10 options. Every correct ID must name an option.
+Use 2 to 10 options. Every correct ID must name an option.
 
 ### Ordering
 
@@ -147,7 +164,7 @@ Use 2–10 options. Every correct ID must name an option.
 }
 ```
 
-Use 2–10 options. `correct_order` must contain every option ID exactly once.
+Use 2 to 10 options. `correct_order` must contain every option ID exactly once.
 
 ### Free response
 
@@ -177,4 +194,4 @@ The rubric should describe concepts and reasoning, not demand exact wording. The
 }
 ```
 
-Replace the empty array with 5–7 valid questions. The app strips answer keys, rubrics, and reference answers before sending quiz data to the browser.
+Replace the empty array with 5 to 7 valid questions. The app strips answer keys, rubrics, and reference answers before sending quiz data to the browser.
