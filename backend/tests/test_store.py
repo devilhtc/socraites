@@ -18,6 +18,7 @@ def test_course_and_public_quiz_load() -> None:
 
     assert course.title == "Test Course"
     assert len(course.lessons) == 1
+    assert course.concepts[0].id == "protocol-boundary"
     assert quiz.questions[0].type == "single_choice"
     assert not hasattr(quiz.questions[0], "correct_option_ids")
     assert quiz.questions[-1].type == "fill_paragraph"
@@ -79,6 +80,14 @@ def test_tutor_edits_are_validated_and_persisted_to_one_lesson(tmp_path: Path) -
             course_id,
             lesson_id,
             "<script>alert('no')</script>",
+            quiz.model_dump_json(indent=2),
+        )
+
+    with pytest.raises(InvalidDataError, match="unknown concept ids"):
+        store.update_lesson_assets(
+            course_id,
+            lesson_id,
+            original_html + '\n<p><span class="concept-ref" data-concept-id="missing">Missing</span></p>',
             quiz.model_dump_json(indent=2),
         )
 

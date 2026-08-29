@@ -3,7 +3,7 @@
 <p class="lead">The best job definition is useless if its event never matches. Choose the trigger from who or what should start the work.</p>
 
 <h2>Use repository events for repository activity</h2>
-<p><code>push</code>, <code>pull_request</code>, and <code>release</code> react to activity GitHub already knows about. Pick the event whose payload and timing match the work, not merely the event that is easiest to remember.</p>
+<p><code>push</code>, <code>pull_request</code>, and <code>release</code> react to activity GitHub already knows about. Pick the <span class="concept-ref" data-concept-id="trigger">trigger</span> whose payload and timing match the work, not merely the event that is easiest to remember.</p>
 <details><summary>Example: test before merge</summary><div><p>Use <code>pull_request</code> for checks that should update as a proposed change evolves. Use a filtered <code>push</code> to run a separate check only after commits land on <code>main</code>.</p></div></details>
 
 <h2>Use manual triggers for operator choices</h2>

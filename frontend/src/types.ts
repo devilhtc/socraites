@@ -7,6 +7,12 @@ export type LessonRef = {
   quiz_file: string;
 };
 
+export type CourseConcept = {
+  id: string;
+  name: string;
+  definition: string;
+};
+
 export type CourseManifest = {
   schema_version: 1;
   id: string;
@@ -14,6 +20,7 @@ export type CourseManifest = {
   category: string;
   subtitle: string;
   description: string;
+  concepts: CourseConcept[];
   lessons: LessonRef[];
 };
 

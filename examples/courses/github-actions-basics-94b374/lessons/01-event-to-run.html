@@ -6,15 +6,15 @@
 <div class="youtube-video" data-video-id="URmeTqglS58" data-title="GitHub explains GitHub Actions"></div>
 
 <h2>The workflow starts with an event</h2>
-<p>A workflow is a YAML file in <code>.github/workflows/</code>. Its <code>on</code> section selects events such as a push, a pull request, or a manual request. When an event matches, GitHub creates a workflow run from that committed file.</p>
+<p>A <span class="concept-ref" data-concept-id="workflow">workflow</span> is a YAML file in <code>.github/workflows/</code>. Its <code>on</code> section selects <span class="concept-ref" data-concept-id="event">events</span> such as a push, a pull request, or a manual request. When an event matches, GitHub creates a <span class="concept-ref" data-concept-id="workflow-run">workflow run</span> from that committed file.</p>
 <details><summary>Example: a pull request starts CI</summary><div><p>A contributor opens a pull request. A workflow containing <code>on: pull_request</code> matches the event, so GitHub creates a run and shows its result as a check on the pull request.</p></div></details>
 
 <h2>Jobs are the units sent to runners</h2>
-<p>A workflow contains one or more jobs. Each job runs on one runner, which is the machine executing the work. Jobs without dependencies may run in parallel. Separate jobs do not automatically share a filesystem.</p>
+<p>A workflow contains one or more <span class="concept-ref" data-concept-id="job">jobs</span>. Each job runs on one <span class="concept-ref" data-concept-id="runner">runner</span>, which is the machine executing the work. Jobs without dependencies may run in parallel. Separate jobs do not automatically share a filesystem.</p>
 <details><summary>Example: test and lint can overlap</summary><div><p>A workflow defines <code>test</code> and <code>lint</code> jobs with no dependency between them. GitHub can assign each job to a different hosted runner and execute both at once.</p></div></details>
 
 <h2>Steps run in order inside a job</h2>
-<p>A step either runs a shell command with <code>run</code> or invokes a reusable action with <code>uses</code>. Steps in one job share the runner's workspace and execute from top to bottom.</p>
+<p>A <span class="concept-ref" data-concept-id="step">step</span> either runs a shell command with <code>run</code> or invokes a reusable action with <code>uses</code>. Steps in one job share the runner's workspace and execute from top to bottom.</p>
 <details><summary>Example: checkout must come before tests</summary><div><p><code>actions/checkout</code> puts the repository files on the runner. A later <code>run: npm test</code> step can then read them. Reversing those steps would ask the test command to run before the code exists on that runner.</p></div></details>
 
 <pre class="mermaid">

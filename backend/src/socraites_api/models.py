@@ -21,6 +21,12 @@ class LessonRef(StrictModel):
     quiz_file: str = Field(min_length=1)
 
 
+class CourseConcept(StrictModel):
+    id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]*$")
+    name: str = Field(min_length=1, max_length=100)
+    definition: str = Field(min_length=1, max_length=500)
+
+
 class CourseManifest(StrictModel):
     schema_version: Literal[1] = 1
     id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]*$")
@@ -28,6 +34,7 @@ class CourseManifest(StrictModel):
     category: str = Field(min_length=1, max_length=80)
     subtitle: str = Field(min_length=1, max_length=180)
     description: str = Field(min_length=1, max_length=800)
+    concepts: list[CourseConcept] = Field(default_factory=list)
     lessons: list[LessonRef] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -35,6 +42,9 @@ class CourseManifest(StrictModel):
         ids = [lesson.id for lesson in self.lessons]
         if len(ids) != len(set(ids)):
             raise ValueError("lesson ids must be unique")
+        concept_ids = [concept.id for concept in self.concepts]
+        if len(concept_ids) != len(set(concept_ids)):
+            raise ValueError("concept ids must be unique")
         return self
 
 

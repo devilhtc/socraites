@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from .concepts import ConceptMarkupError, render_concept_cards
 from .judge import JudgeService, JudgeUnavailable
 from .lesson_media import render_youtube_embeds
 from .mermaid import MermaidRenderer
@@ -143,6 +144,12 @@ LESSON_SHELL = """<!doctype html>
     .lead { color:var(--ink); font-size:21px; line-height:1.6; }
     .concept { margin:28px 0; padding:22px 24px; border-left:3px solid var(--accent); background:var(--panel); border-radius:0 14px 14px 0; }
     .concept p { margin:0; }
+    .concept-term { position:relative; color:var(--teal); font-style:normal; font-weight:700; text-decoration:underline dotted; text-decoration-thickness:1px; text-underline-offset:.2em; cursor:help; outline:none; }
+    .concept-term:focus-visible { border-radius:4px; box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent); }
+    .concept-card { position:absolute; z-index:20; top:calc(100% + 10px); left:50%; display:block; width:min(320px,72vw); padding:16px 18px; border:1px solid var(--line); border-radius:12px; background:var(--panel-strong); box-shadow:0 14px 36px rgba(0,0,0,.24); color:var(--body); font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif; text-align:left; text-decoration:none; transform:translate(-50%,-4px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .13s ease,transform .13s ease,visibility 0s linear .13s; }
+    .concept-term:hover .concept-card,.concept-term:focus .concept-card { opacity:1; visibility:visible; transform:translate(-50%,0); transition-delay:0s; }
+    .concept-card-title,.concept-card-definition { display:block; }
+    .concept-card-title { margin-bottom:5px; color:var(--ink); font-size:13px; letter-spacing:.04em; }
     .trace { display:grid; gap:10px; margin:24px 0; }
     .trace div { padding:13px 16px; border:1px solid var(--line); border-radius:10px; background:var(--panel); }
     .trace b { color:var(--teal); }
@@ -337,6 +344,7 @@ def create_app(
                 lesson.title,
                 lesson_html,
                 lesson_quiz,
+                course.concepts,
                 history,
                 user_text,
             )
@@ -407,7 +415,11 @@ def create_app(
         accent: str | None = None,
         background: str | None = None,
     ) -> HTMLResponse:
-        _, fragment = course_store.lesson_html(course_id, lesson_id)
+        course, fragment = course_store.lesson_html(course_id, lesson_id)
+        try:
+            fragment = render_concept_cards(fragment, course.concepts)
+        except ConceptMarkupError as exc:
+            raise InvalidDataError(f"lesson has invalid concept markup: {exc}") from exc
         fragment = render_youtube_embeds(fragment)
         fragment = await mermaid_renderer.render_fragment(fragment)
         fragment = await syntax_highlighter.render_fragment(fragment)

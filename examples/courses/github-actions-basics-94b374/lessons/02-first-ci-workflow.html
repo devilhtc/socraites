@@ -3,7 +3,7 @@
 <p class="lead">A useful first workflow checks every pull request and main-branch push with the same install and test commands.</p>
 
 <h2>Put the file where GitHub looks</h2>
-<p>Create <code>.github/workflows/ci.yml</code>. The filename is for humans; the keys inside define the workflow's display name, triggers, permissions, and jobs.</p>
+<p>Create <code>.github/workflows/ci.yml</code>. The filename is for humans; the keys inside define the <span class="concept-ref" data-concept-id="workflow">workflow's</span> display name, triggers, permissions, and jobs.</p>
 <details><summary>Example: two workflow files stay independent</summary><div><p><code>ci.yml</code> can test each change while <code>release.yml</code> publishes tagged releases. Both live under <code>.github/workflows/</code>, and each declares its own triggers and jobs.</p></div></details>
 
 <h2>Connect each YAML key to behavior</h2>

@@ -5,6 +5,13 @@
   "category": "Subject area",
   "subtitle": "What this course helps the learner do.",
   "description": "Replace this template copy with a concise description of the course's learning outcome.",
+  "concepts": [
+    {
+      "id": "working-definition",
+      "name": "Working definition",
+      "definition": "Replace this with a concrete explanation of one term the learner will meet in the lesson."
+    }
+  ],
   "lessons": [
     {
       "id": "foundation",

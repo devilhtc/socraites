@@ -23,6 +23,7 @@ from acp.schema import (
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from .models import (
+    CourseConcept,
     FillParagraphQuestion,
     FreeResponseQuestion,
     JudgeResult,
@@ -320,6 +321,7 @@ class JudgeService:
         lesson_title: str,
         lesson_html: str,
         quiz: Quiz,
+        concepts: list[CourseConcept],
         history: list[TutorTurn],
         user_text: str,
     ) -> TutorReply:
@@ -347,12 +349,16 @@ Teach Socratically in short turns:
 When the learner explicitly asks to change, expand, correct, or rewrite this chapter or its quiz, edit lesson.html and/or quiz.json directly. Do not merely paste a proposed replacement into chat. Keep the quiz id and schema_version unchanged. Keep quizzes at 5–7 substantial questions when practical, with no more than one free-response question. Preserve the JSON shape already present in quiz.json and ensure every choice id referenced by an answer exists.
 
 lesson.html must remain an HTML fragment with no html, head, body, style, script, form, or iframe elements. Use the application's existing classes. Keep material bite-sized. Accompany every learning point with at least one concrete example. Put extended examples in collapsible blocks formatted with <details><summary> on the same line and </details> followed by only one line break. Add concise code snippets when they materially improve the lesson. Give highlighted code an exact language class, such as <pre><code class="language-js">...</code></pre>, and HTML-escape code characters. You may add a focused Mermaid flowchart, state diagram, or sequence diagram as plain text inside an exact <pre class="mermaid">...</pre> wrapper when it makes an important relationship easier to understand. Do not add Mermaid initialization directives or HTML inside the block. You may use a checked, user-supplied YouTube video only through <div class="youtube-video" data-video-id="VIDEO_ID" data-title="SPECIFIC TITLE"></div>. Never invent a video ID or paste iframe markup.
+Link an indexed concept only with <span class="concept-ref" data-concept-id="CONCEPT_ID">visible term</span>. Use IDs from the course concept index below. Preserve existing concept links. You cannot add or rename course-level concepts from this chapter workspace.
 Write concrete, active prose. Use plain words and sentence case headings. Do not use em dashes, en dashes, curly quotes, canned AI vocabulary, vague praise, or bold labels ending in a colon.
 
 Do not edit files for an informational question. Do not create other files. Do not browse or use the network. Never paste a complete lesson, quiz, HTML fragment, or JSON document into chat. Keep code examples below 12 lines. After an edit, respond with at most two short sentences confirming what changed; do not reproduce any edited content. Plain text or simple Markdown is allowed.
 
 COURSE: {course_title}
 CHAPTER: {lesson_title}
+
+COURSE CONCEPT INDEX:
+{json.dumps([concept.model_dump(mode="json") for concept in concepts], ensure_ascii=False, indent=2)}
 
 EARLIER CONVERSATION:
 {transcript}

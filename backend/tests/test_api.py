@@ -42,6 +42,10 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
     assert 'class="hljs-keyword"' in response.text
     assert 'src="https://www.youtube-nocookie.com/embed/M7lc1UVf-VE"' in response.text
     assert 'title="YouTube embedded player demonstration"' in response.text
+    assert '<dfn class="concept-term" tabindex="0"' in response.text
+    assert 'class="concept-card"' in response.text
+    assert "The point where two components exchange defined messages" in response.text
+    assert 'data-concept-id="protocol-boundary"' not in response.text
 
 
 def test_rendered_lesson_accepts_validated_custom_colors(tmp_path: Path, monkeypatch) -> None:
@@ -211,12 +215,13 @@ def test_generated_questions_are_private_and_survive_restart(tmp_path: Path, mon
 def test_tutor_conversation_uses_chapter_context_and_survives_restart(tmp_path: Path, monkeypatch) -> None:
     captured: dict[str, object] = {}
 
-    async def tutor(_self, course_title, lesson_title, lesson_html, quiz, history, user_text):
+    async def tutor(_self, course_title, lesson_title, lesson_html, quiz, concepts, history, user_text):
         captured.update({
             "course_title": course_title,
             "lesson_title": lesson_title,
             "lesson_html": lesson_html,
             "quiz": quiz,
+            "concepts": concepts,
             "history": history,
             "user_text": user_text,
         })
@@ -243,7 +248,8 @@ def test_tutor_conversation_uses_chapter_context_and_survives_restart(tmp_path: 
     assert payload["conversation"]["turns"][0]["assistant_text"].startswith("Think of ACP")
     assert captured["course_title"] == "Test Course"
     assert captured["lesson_title"] == "Protocol boundary"
-    assert "A protocol boundary separates" in str(captured["lesson_html"])
+    assert len(captured["concepts"]) == 2
+    assert 'data-concept-id="protocol-boundary"' in str(captured["lesson_html"])
     assert captured["user_text"] == "What boundary does ACP create?"
 
     restored = make_client(tmp_path, monkeypatch).get("/api/courses/test-course-a1b2c3/lessons/boundary/tutor")

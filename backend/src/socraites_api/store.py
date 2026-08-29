@@ -33,6 +33,7 @@ from .models import (
     TutorView,
     WorkspaceView,
 )
+from .concepts import ConceptMarkupError, validate_concept_references
 
 SAFE_ID = re.compile(r"^[a-z0-9][a-z0-9-]*$")
 
@@ -155,6 +156,10 @@ class CourseStore:
             raise InvalidDataError("edited lesson is too large")
         if re.search(r"<\s*(?:html|head|body|style|script|form|iframe)\b", fragment, re.IGNORECASE):
             raise InvalidDataError("edited lesson contains a forbidden HTML element")
+        try:
+            validate_concept_references(fragment, manifest.concepts)
+        except ConceptMarkupError as exc:
+            raise InvalidDataError(f"edited lesson has invalid concept markup: {exc}") from exc
 
         try:
             quiz = Quiz.model_validate_json(quiz_payload)

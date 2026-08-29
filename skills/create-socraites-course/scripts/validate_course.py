@@ -36,6 +36,13 @@ YOUTUBE_MARKER = re.compile(
     r'<div\b[^>]*\bclass=["\'][^"\']*\byoutube-video\b',
     flags=re.IGNORECASE,
 )
+CONCEPT_REF = re.compile(
+    r'<span class="concept-ref" data-concept-id="([a-z0-9][a-z0-9-]*)">([^<>\n]+)</span>'
+)
+CONCEPT_MARKER = re.compile(
+    r'<span\b[^>]*\bclass=["\'][^"\']*\bconcept-ref\b',
+    flags=re.IGNORECASE,
+)
 SLOP_PUNCTUATION = {
     "—": "em dash",
     "–": "en dash",
@@ -206,30 +213,30 @@ def bounded_file(root: Path, relative: Any, label: str, errors: list[str]) -> Pa
     return candidate
 
 
-def validate_lesson(path: Path, errors: list[str]) -> None:
-    html = path.read_text(encoding="utf-8")
+def validate_lesson(path: Path, concept_ids: set[str], errors: list[str]) -> set[str]:
+    source_html = path.read_text(encoding="utf-8")
     parser = LessonParser()
     try:
-        parser.feed(html)
+        parser.feed(source_html)
     except Exception as exc:
         errors.append(f"{path} is not parseable HTML: {exc}")
-        return
+        return set()
     if parser.forbidden:
         errors.append(f"{path} contains forbidden tags: {', '.join(sorted(parser.forbidden))}")
     word_count = len(re.findall(r"\b[\w'-]+\b", " ".join(parser.text_parts)))
     if word_count >= 500:
         errors.append(f"{path} has {word_count} words; lessons must stay below 500")
-    details_count = html.count("<details")
-    if details_count != html.count("<details><summary>"):
+    details_count = source_html.count("<details")
+    if details_count != source_html.count("<details><summary>"):
         errors.append(f"{path} must keep every <details><summary> opening on one line")
-    if details_count != html.count("</div></details>"):
+    if details_count != source_html.count("</div></details>"):
         errors.append(f"{path} must close example content as </div></details> on one line")
     examples = [text for text in parser.summary_text if text.startswith("Example:")]
     if len(examples) < 3:
         errors.append(f"{path} needs at least 3 example details blocks; found {len(examples)}")
     if len(examples) < parser.h2_count:
         errors.append(f"{path} has fewer examples ({len(examples)}) than learning sections ({parser.h2_count})")
-    if re.search(r"<strong>[^<]+:</strong>", html):
+    if re.search(r"<strong>[^<]+:</strong>", source_html):
         errors.append(f"{path} uses a bold label ending in a colon; write the lead-in as a sentence")
     if parser.mermaid_has_nested_markup:
         errors.append(f'{path} Mermaid blocks must contain plain Mermaid text inside <pre class="mermaid">')
@@ -237,8 +244,24 @@ def validate_lesson(path: Path, errors: list[str]) -> None:
         errors.append(f'{path} must use the exact Mermaid opening tag <pre class="mermaid">')
     for index, source in enumerate(parser.mermaid_sources, start=1):
         validate_mermaid(source, path, index, errors)
-    validate_code_blocks(html, path, errors)
-    validate_youtube_blocks(html, path, errors)
+    validate_code_blocks(source_html, path, errors)
+    validate_youtube_blocks(source_html, path, errors)
+    concept_matches = list(CONCEPT_REF.finditer(source_html))
+    if len(concept_matches) != len(CONCEPT_MARKER.findall(source_html)):
+        errors.append(
+            f'{path} must link concepts exactly as <span class="concept-ref" '
+            'data-concept-id="concept-id">visible term</span>'
+        )
+    references = {match.group(1) for match in concept_matches}
+    if not references:
+        errors.append(f"{path} must link at least one indexed course concept")
+    unknown = sorted(references - concept_ids)
+    if unknown:
+        errors.append(f"{path} references unknown concept IDs: {', '.join(unknown)}")
+    for match in concept_matches:
+        if not html.unescape(match.group(2)).strip():
+            errors.append(f"{path} has a concept reference with no visible term")
+    return references
 
 
 def validate_unslop_punctuation(root: Path, errors: list[str]) -> None:
@@ -391,7 +414,12 @@ def validate_course(root: Path) -> list[str]:
     manifest = read_json(root / "course.json", errors)
     if manifest is None:
         return errors
-    require_keys(manifest, {"schema_version", "id", "title", "category", "subtitle", "description", "lessons"}, "course.json", errors)
+    require_keys(
+        manifest,
+        {"schema_version", "id", "title", "category", "subtitle", "description", "concepts", "lessons"},
+        "course.json",
+        errors,
+    )
     if manifest.get("schema_version") != 1:
         errors.append("course.json.schema_version must be 1")
     course_id = manifest.get("id")
@@ -402,11 +430,45 @@ def validate_course(root: Path) -> list[str]:
     for field in ("title", "category", "subtitle", "description"):
         if not isinstance(manifest.get(field), str) or not manifest[field].strip():
             errors.append(f"course.json.{field} is required")
+    concepts = manifest.get("concepts")
+    concept_ids: list[str] = []
+    concept_names: list[str] = []
+    if not isinstance(concepts, list) or not concepts:
+        errors.append("course.json.concepts must be a non-empty array")
+    else:
+        for index, concept in enumerate(concepts):
+            label = f"course.json.concepts[{index}]"
+            if not isinstance(concept, dict):
+                errors.append(f"{label} must be an object")
+                continue
+            require_keys(concept, {"id", "name", "definition"}, label, errors)
+            concept_id = concept.get("id")
+            if not isinstance(concept_id, str) or not SLUG.fullmatch(concept_id):
+                errors.append(f"{label}.id is invalid")
+            else:
+                concept_ids.append(concept_id)
+            name = concept.get("name")
+            if not isinstance(name, str) or not name.strip():
+                errors.append(f"{label}.name is required")
+            elif len(name) > 100:
+                errors.append(f"{label}.name must not exceed 100 characters")
+            else:
+                concept_names.append(name.strip().casefold())
+            definition = concept.get("definition")
+            if not isinstance(definition, str) or not definition.strip():
+                errors.append(f"{label}.definition is required")
+            elif len(definition) > 500:
+                errors.append(f"{label}.definition must not exceed 500 characters")
+    if len(concept_ids) != len(set(concept_ids)):
+        errors.append("course.json has duplicate concept IDs")
+    if len(concept_names) != len(set(concept_names)):
+        errors.append("course.json has duplicate concept names")
     lessons = manifest.get("lessons")
     if not isinstance(lessons, list) or not lessons:
         errors.append("course.json.lessons must be a non-empty array")
         return errors
     lesson_ids: list[str] = []
+    referenced_concepts: set[str] = set()
     for index, lesson in enumerate(lessons):
         label = f"course.json.lessons[{index}]"
         if not isinstance(lesson, dict):
@@ -427,11 +489,14 @@ def validate_course(root: Path) -> list[str]:
         lesson_path = bounded_file(root, lesson.get("lesson_file"), f"{label}.lesson_file", errors)
         quiz_path = bounded_file(root, lesson.get("quiz_file"), f"{label}.quiz_file", errors)
         if lesson_path:
-            validate_lesson(lesson_path, errors)
+            referenced_concepts.update(validate_lesson(lesson_path, set(concept_ids), errors))
         if quiz_path:
             validate_quiz(quiz_path, errors)
     if len(lesson_ids) != len(set(lesson_ids)):
         errors.append("course.json has duplicate lesson IDs")
+    unused_concepts = sorted(set(concept_ids) - referenced_concepts)
+    if unused_concepts:
+        errors.append(f"course.json has concepts that no lesson links: {', '.join(unused_concepts)}")
     return errors
 
 

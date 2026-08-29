@@ -27,6 +27,13 @@ data/courses/<course-id>/
   "category": "Subject area",
   "subtitle": "One-line promise",
   "description": "A concise description of what the learner will understand.",
+  "concepts": [
+    {
+      "id": "protocol-boundary",
+      "name": "Protocol boundary",
+      "definition": "The point where two components exchange defined messages without sharing their internal implementation."
+    }
+  ],
   "lessons": [
     {
       "id": "first-topic",
@@ -41,6 +48,24 @@ data/courses/<course-id>/
 ```
 
 IDs are stable storage keys. Display titles may change; IDs should not.
+
+### Course concept index
+
+Every course defines a non-empty `concepts` array in `course.json`. Each entry has exactly three fields:
+
+- `id`: a stable lowercase slug, unique within the course.
+- `name`: the term shown as the concept card heading.
+- `definition`: one or two concrete sentences that let the learner return to the lesson without losing their place.
+
+Keep concepts at the level a learner will need across explanations or lessons. Do not index every proper noun, UI label, or one-off phrase. Definitions explain the term in this course's subject, not in generic dictionary language.
+
+Link visible lesson prose to the index with this exact marker:
+
+```html
+The <span class="concept-ref" data-concept-id="protocol-boundary">protocol boundary</span> separates the peers' responsibilities.
+```
+
+Socraites replaces the marker with a theme-aware card that opens on pointer hover or keyboard focus. The visible term may use a grammatical variant, but `data-concept-id` must match an indexed concept. Use plain text inside the span, preserve the exact attribute order, and link at least one concept in every lesson. Every indexed concept must be linked by at least one lesson.
 
 ## Lesson HTML
 
@@ -121,6 +146,7 @@ Quality requirements:
 
 - Fewer than 500 words per lesson fragment.
 - One coherent idea per lesson; split dense material into more lessons.
+- A small course-level concept index with at least one linked concept in every lesson.
 - Every substantive learning point has at least one example.
 - At least three `<details><summary>Example: …</summary>` blocks per lesson.
 - Prefer important interactions over exhaustive sequences. Use `.trace`, tables, concise HTML walkthroughs, Mermaid diagrams, highlighted code, or a checked video when relationships are clearer in that medium.

@@ -5,6 +5,68 @@
   "category": "Software engineering",
   "subtitle": "Read, write, and troubleshoot a small CI workflow.",
   "description": "Learn how events create workflow runs, how jobs and steps execute, how data crosses job boundaries, and how to keep a first workflow safe and observable.",
+  "concepts": [
+    {
+      "id": "workflow",
+      "name": "Workflow",
+      "definition": "A YAML file in .github/workflows that defines the events and jobs for one automation."
+    },
+    {
+      "id": "workflow-run",
+      "name": "Workflow run",
+      "definition": "One execution of a workflow after a matching event starts it."
+    },
+    {
+      "id": "event",
+      "name": "Event",
+      "definition": "Repository activity, a schedule, or a manual request that GitHub can match against a workflow's on section."
+    },
+    {
+      "id": "job",
+      "name": "Job",
+      "definition": "A group of ordered steps assigned to one runner. Jobs are isolated unless the workflow connects them explicitly."
+    },
+    {
+      "id": "runner",
+      "name": "Runner",
+      "definition": "The machine that executes one job's steps. GitHub can host it, or you can register your own machine."
+    },
+    {
+      "id": "step",
+      "name": "Step",
+      "definition": "One ordered command or reusable action inside a job. Steps in the same job share its runner workspace."
+    },
+    {
+      "id": "trigger",
+      "name": "Trigger",
+      "definition": "The event configuration that decides whether GitHub creates a workflow run. Filters can narrow which matching events count."
+    },
+    {
+      "id": "job-dependency",
+      "name": "Job dependency",
+      "definition": "A needs relationship that makes one job wait for selected earlier jobs and exposes their declared outputs."
+    },
+    {
+      "id": "artifact",
+      "name": "Artifact",
+      "definition": "Files uploaded from a run so another job or a person can download the exact result later."
+    },
+    {
+      "id": "cache",
+      "name": "Cache",
+      "definition": "Reusable dependency data stored to make later runs faster. A cache is an optimization, not a build result."
+    },
+    {
+      "id": "matrix",
+      "name": "Matrix",
+      "definition": "A set of variable combinations that expands one job definition into several related jobs."
+    },
+    {
+      "id": "github-token",
+      "name": "GITHUB_TOKEN",
+      "definition": "A short-lived token GitHub creates for a job. Its permissions control which repository operations the workflow may perform."
+    }
+  ],
   "lessons": [
     {
       "id": "event-to-run",

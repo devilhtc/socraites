@@ -3,7 +3,7 @@
 <p class="lead">A workflow runs code with access to a repository and sometimes other systems. Safe permissions and layered debugging belong in the first version, not a later cleanup.</p>
 
 <h2>Grant the built-in token only what the job needs</h2>
-<p>Declare <code>permissions</code> instead of relying on a broad default. Start with no permission or read-only repository contents, then add a specific write permission only to the job that performs that operation.</p>
+<p>Declare <code>permissions</code> for the <span class="concept-ref" data-concept-id="github-token">built-in job token</span> instead of relying on a broad default. Start with no permission or read-only repository contents, then add a specific write permission only to the job that performs that operation.</p>
 <details><summary>Example: tests only read the repository</summary><div><p>A test job uses <code>permissions: { contents: read }</code>. It can check out the code but cannot create releases or modify issues with its built-in token.</p></div></details>
 
 <h2>Treat outside values and code as untrusted</h2>

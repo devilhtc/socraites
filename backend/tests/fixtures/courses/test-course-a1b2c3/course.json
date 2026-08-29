@@ -5,6 +5,18 @@
   "category": "Testing",
   "subtitle": "A small fixture for clean-clone verification.",
   "description": "This synthetic course keeps the test suite independent from private learner content stored under data/.",
+  "concepts": [
+    {
+      "id": "protocol-boundary",
+      "name": "Protocol boundary",
+      "definition": "The point where two components exchange defined messages without sharing their internal implementation."
+    },
+    {
+      "id": "workflow-run",
+      "name": "Workflow run",
+      "definition": "One execution of a workflow after a matching event starts it."
+    }
+  ],
   "lessons": [
     {
       "id": "boundary",

@@ -60,6 +60,7 @@ def test_tutor_agent_edits_only_staged_course_assets(tmp_path: Path, monkeypatch
             lesson.title,
             lesson_html,
             quiz,
+            course.concepts,
             [],
             "Expand this chapter and quiz.",
         )
@@ -69,6 +70,7 @@ def test_tutor_agent_edits_only_staged_course_assets(tmp_path: Path, monkeypatch
     assert str(observed["workspace"]).startswith(str(tmp_path / ".socraites-agent"))
     assert "Teach Socratically in short turns" in str(observed["prompt"])
     assert "Never paste a complete lesson" in str(observed["prompt"])
+    assert "COURSE CONCEPT INDEX" in str(observed["prompt"])
     assert "Added by the tutor" in reply.lesson_html
     assert json.loads(reply.quiz_json)["title"] == "Expanded protocol boundary check"
     assert reply.text.startswith("Updated the lesson and quiz directly.")

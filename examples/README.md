@@ -4,7 +4,7 @@ These courses are committed demonstrations of Socraites' lesson and quiz formats
 
 ## GitHub Actions Basics
 
-`github-actions-basics-94b374` is a five-lesson course with 5 to 7 questions per lesson. Its first two lessons demonstrate the richer lesson media:
+`github-actions-basics-94b374` is a five-lesson course with 5 to 7 questions per lesson. It includes a course-level concept index whose terms open short definition cards on hover or keyboard focus. Its first two lessons also demonstrate the richer lesson media:
 
 - `01-event-to-run.html` embeds an official GitHub YouTube video and renders a Mermaid flowchart.
 - `02-first-ci-workflow.html` uses syntax highlighting for a complete YAML workflow.
