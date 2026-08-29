@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -36,6 +37,41 @@ from .syntax import SyntaxHighlighter
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DATA_ROOT = PROJECT_ROOT / "data"
+HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def _mix_color(base: str, overlay: str, overlay_weight: float) -> str:
+    base_channels = [int(base[index:index + 2], 16) for index in (1, 3, 5)]
+    overlay_channels = [int(overlay[index:index + 2], 16) for index in (1, 3, 5)]
+    channels = [
+        round(base_channel * (1 - overlay_weight) + overlay_channel * overlay_weight)
+        for base_channel, overlay_channel in zip(base_channels, overlay_channels, strict=True)
+    ]
+    return "#" + "".join(f"{channel:02x}" for channel in channels)
+
+
+def _lesson_theme_tokens(
+    theme: Literal["light", "dark"],
+    accent: str | None,
+    background: str | None,
+) -> dict[str, str]:
+    for label, color in (("accent", accent), ("background", background)):
+        if color is not None and not HEX_COLOR.fullmatch(color):
+            raise HTTPException(status_code=422, detail=f"{label} must be a six-digit hex color")
+    dark = theme == "dark"
+    page = (background or ("#151514" if dark else "#fbf7ee")).lower()
+    selected_accent = (accent or ("#f4be5b" if dark else "#a85f16")).lower()
+    return {
+        "{{PAGE}}": page,
+        "{{PANEL}}": _mix_color(page, "#ffffff" if dark else "#000000", 0.06 if dark else 0.055),
+        "{{PANEL_STRONG}}": _mix_color(page, "#ffffff", 0.10 if dark else 0.62),
+        "{{INK}}": _mix_color(page, "#ffffff" if dark else "#000000", 0.94 if dark else 0.87),
+        "{{BODY}}": _mix_color(page, "#ffffff" if dark else "#000000", 0.78 if dark else 0.66),
+        "{{MUTED}}": _mix_color(page, "#ffffff" if dark else "#000000", 0.58 if dark else 0.53),
+        "{{LINE}}": _mix_color(page, "#ffffff" if dark else "#000000", 0.14),
+        "{{ACCENT}}": selected_accent,
+        "{{CODE}}": _mix_color(page, "#ffffff" if dark else "#000000", 0.08 if dark else 0.07),
+    }
 
 # YouTube's player needs scripts, same-origin state, and an origin referrer in its
 # nested frame. script-src still blocks every script in the lesson document itself.
@@ -74,6 +110,7 @@ LESSON_SHELL = """<!doctype html>
   <style>
     :root { color-scheme:light; --page:#fbf7ee; --panel:#f2eadc; --panel-strong:#fffdf8; --ink:#211f1b; --body:#514d45; --muted:#777168; --line:#d9cfbf; --accent:#a85f16; --teal:#167b70; --code:#e9e2d6; --syntax-comment:#777168; --syntax-keyword:#9c3d10; --syntax-string:#167b70; --syntax-number:#8a4fa3; --syntax-title:#245ea8; --syntax-variable:#8b5a12; --syntax-addition:#277442; --syntax-deletion:#b13535; }
     :root[data-theme="dark"] { color-scheme:dark; --page:#151514; --panel:#1d1d1b; --panel-strong:#101110; --ink:#f6f2e8; --body:#d3cfc5; --muted:#aaa69d; --line:#31312f; --accent:#f4be5b; --teal:#72d6c9; --code:#222321; --syntax-comment:#8d897f; --syntax-keyword:#ff9b72; --syntax-string:#72d6c9; --syntax-number:#c7a0e8; --syntax-title:#8ab4f8; --syntax-variable:#efc06f; --syntax-addition:#7ed49a; --syntax-deletion:#ff8e8e; }
+    :root { --page:{{PAGE}}; --panel:{{PANEL}}; --panel-strong:{{PANEL_STRONG}}; --ink:{{INK}}; --body:{{BODY}}; --muted:{{MUTED}}; --line:{{LINE}}; --accent:{{ACCENT}}; --code:{{CODE}}; }
     * { box-sizing:border-box; }
     html { height:100%; overflow:hidden; }
     body { height:100%; margin:0; overflow:auto; overscroll-behavior:contain; background:var(--page); color:var(--ink); font:17px/1.7 Inter,ui-sans-serif,system-ui,sans-serif; }
@@ -367,15 +404,17 @@ def create_app(
         course_id: str,
         lesson_id: str,
         theme: Literal["light", "dark"] = "dark",
+        accent: str | None = None,
+        background: str | None = None,
     ) -> HTMLResponse:
         _, fragment = course_store.lesson_html(course_id, lesson_id)
         fragment = render_youtube_embeds(fragment)
         fragment = await mermaid_renderer.render_fragment(fragment)
         fragment = await syntax_highlighter.render_fragment(fragment)
-        return HTMLResponse(
-            LESSON_SHELL.replace("{{THEME}}", theme).replace("{{CONTENT}}", fragment),
-            headers=LESSON_HEADERS,
-        )
+        rendered = LESSON_SHELL.replace("{{THEME}}", theme).replace("{{CONTENT}}", fragment)
+        for placeholder, value in _lesson_theme_tokens(theme, accent, background).items():
+            rendered = rendered.replace(placeholder, value)
+        return HTMLResponse(rendered, headers=LESSON_HEADERS)
 
     @application.post(
         "/api/courses/{course_id}/lessons/{lesson_id}/attempts",

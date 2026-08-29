@@ -44,6 +44,25 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
     assert 'title="YouTube embedded player demonstration"' in response.text
 
 
+def test_rendered_lesson_accepts_validated_custom_colors(tmp_path: Path, monkeypatch) -> None:
+    client = make_client(tmp_path, monkeypatch)
+
+    custom = client.get(
+        "/render/courses/test-course-a1b2c3/lessons/boundary"
+        "?theme=dark&accent=%2338c6b4&background=%230d1b24"
+    )
+    invalid = client.get(
+        "/render/courses/test-course-a1b2c3/lessons/boundary"
+        "?accent=red%3Bbackground%3Aurl(evil)"
+    )
+
+    assert custom.status_code == 200
+    assert "--page:#0d1b24" in custom.text
+    assert "--accent:#38c6b4" in custom.text
+    assert "{{PAGE}}" not in custom.text
+    assert invalid.status_code == 422
+
+
 def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> None:
     client = make_client(tmp_path, monkeypatch)
 

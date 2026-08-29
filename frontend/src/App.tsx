@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { api } from "./api";
+import {
+  PALETTE_PRESETS,
+  paletteName,
+  paletteTokens,
+  restorePalette,
+  themeMode,
+} from "./theme";
+import type { Palette } from "./theme";
 import type {
   AttemptResult,
   CourseSummary,
@@ -341,16 +349,95 @@ function Brand({ onHome }: { onHome: () => void }) {
   );
 }
 
-function ThemeToggle({ theme, onToggle }: { theme: "light" | "dark"; onToggle: () => void }) {
+function AppearancePicker({
+  palette,
+  placement,
+  onChange,
+}: {
+  palette: Palette;
+  placement: "top" | "bottom";
+  onChange: (palette: Palette) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  const currentName = paletteName(palette);
+
+  useEffect(() => {
+    if (!open) return;
+    function closeOnOutside(event: PointerEvent) {
+      if (!pickerRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("pointerdown", closeOnOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [open]);
+
   return (
-    <button
-      className="theme-toggle"
-      type="button"
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      onClick={onToggle}
-    >
-      {theme === "dark" ? "☀" : "☾"}
-    </button>
+    <div className="appearance-picker" ref={pickerRef}>
+      <button
+        className="appearance-trigger"
+        type="button"
+        aria-label={`Customize appearance. Current palette: ${currentName}`}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        title={`Appearance: ${currentName}`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span style={{ background: `linear-gradient(135deg, ${palette.background} 0 49%, ${palette.accent} 51% 100%)` }} />
+      </button>
+      {open && (
+        <section className={`appearance-panel ${placement}`} role="dialog" aria-label="Appearance settings">
+          <header>
+            <div><span>Appearance</span><strong>{currentName}</strong></div>
+            <button type="button" aria-label="Close appearance settings" onClick={() => setOpen(false)}>×</button>
+          </header>
+          <p>Palette presets</p>
+          <div className="palette-grid">
+            {PALETTE_PRESETS.map((preset) => (
+              <button
+                type="button"
+                className={palette.presetId === preset.presetId ? "selected" : ""}
+                aria-pressed={palette.presetId === preset.presetId}
+                key={preset.presetId}
+                onClick={() => {
+                  onChange({ presetId: preset.presetId, accent: preset.accent, background: preset.background });
+                }}
+              >
+                <i style={{ background: preset.background }}><b style={{ background: preset.accent }} /></i>
+                <span>{preset.name}</span>
+              </button>
+            ))}
+          </div>
+          <p>Custom mix</p>
+          <div className="custom-colors">
+            <label>
+              <span>Accent <output>{palette.accent.toUpperCase()}</output></span>
+              <input
+                type="color"
+                aria-label="Custom accent color"
+                value={palette.accent}
+                onChange={(event) => onChange({...palette, presetId: null, accent: event.target.value})}
+              />
+            </label>
+            <label>
+              <span>Background <output>{palette.background.toUpperCase()}</output></span>
+              <input
+                type="color"
+                aria-label="Custom background color"
+                value={palette.background}
+                onChange={(event) => onChange({...palette, presetId: null, background: event.target.value})}
+              />
+            </label>
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -475,21 +562,21 @@ function TutorPanel({
 
 function Dashboard({
   courses,
-  theme,
+  palette,
   onOpen,
-  onThemeToggle,
+  onPaletteChange,
 }: {
   courses: CourseSummary[];
-  theme: "light" | "dark";
+  palette: Palette;
   onOpen: (courseId: string) => void;
-  onThemeToggle: () => void;
+  onPaletteChange: (palette: Palette) => void;
 }) {
   return (
     <div className="dashboard-shell">
       <header className="dashboard-topbar">
         <Brand onHome={() => window.scrollTo({ top: 0, behavior: "smooth" })} />
         <div className="dashboard-tools">
-          <ThemeToggle theme={theme} onToggle={onThemeToggle} />
+          <AppearancePicker palette={palette} placement="top" onChange={onPaletteChange} />
         </div>
       </header>
       <main className="dashboard-main">
@@ -543,11 +630,11 @@ function Dashboard({
 }
 
 export default function App() {
-  const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const saved = window.localStorage.getItem("socraites-theme");
-    if (saved === "light" || saved === "dark") return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  });
+  const [palette, setPalette] = useState<Palette>(() => restorePalette(
+    window.localStorage.getItem("socraites-palette"),
+    window.localStorage.getItem("socraites-theme"),
+    window.matchMedia("(prefers-color-scheme: dark)").matches,
+  ));
   const [routeCourseId, setRouteCourseId] = useState<string | null>(courseIdFromHash);
   const [courses, setCourses] = useState<CourseSummary[]>([]);
   const [courseView, setCourseView] = useState<CourseView | null>(null);
@@ -580,6 +667,7 @@ export default function App() {
   const [pendingTutorMessage, setPendingTutorMessage] = useState<string | null>(null);
   const [tutorError, setTutorError] = useState<string | null>(null);
   const [lessonContentRevision, setLessonContentRevision] = useState(0);
+  const mode = themeMode(palette.background);
 
   async function refreshLibrary() {
     const next = await api.courses();
@@ -603,9 +691,13 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    window.localStorage.setItem("socraites-theme", theme);
-  }, [theme]);
+    document.documentElement.dataset.theme = mode;
+    for (const [property, value] of Object.entries(paletteTokens(palette))) {
+      document.documentElement.style.setProperty(property, value);
+    }
+    window.localStorage.setItem("socraites-palette", JSON.stringify(palette));
+    window.localStorage.setItem("socraites-theme", mode);
+  }, [mode, palette]);
 
   useEffect(() => {
     window.localStorage.setItem("socraites-left-panel", leftCollapsed ? "collapsed" : "open");
@@ -895,9 +987,9 @@ export default function App() {
     return (
       <Dashboard
         courses={courses}
-        theme={theme}
+        palette={palette}
         onOpen={openCourse}
-        onThemeToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onPaletteChange={setPalette}
       />
     );
   }
@@ -980,7 +1072,7 @@ export default function App() {
         </div>
         <footer className="sidebar-footer">
           <div><span>Drafts saved</span><span>·</span><span>Files stay local</span></div>
-          <ThemeToggle theme={theme} onToggle={() => setTheme(theme === "dark" ? "light" : "dark")} />
+          <AppearancePicker palette={palette} placement="bottom" onChange={setPalette} />
         </footer>
       </aside>
 
@@ -1018,12 +1110,12 @@ export default function App() {
             </button>
             <iframe
               className="lesson-frame"
-              key={`${lessonId}-${theme}-${lessonContentRevision}`}
+              key={`${lessonId}-${palette.background}-${palette.accent}-${lessonContentRevision}`}
               sandbox="allow-scripts allow-same-origin allow-presentation"
               allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
               scrolling="auto"
               title={`${currentLesson.title} lesson`}
-              src={`/render/courses/${routeCourseId}/lessons/${lessonId}?theme=${theme}`}
+              src={`/render/courses/${routeCourseId}/lessons/${lessonId}?theme=${mode}&accent=${encodeURIComponent(palette.accent)}&background=${encodeURIComponent(palette.background)}`}
             />
           </section>
         ) : (
