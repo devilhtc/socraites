@@ -145,7 +145,7 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 .sidebar-launcher { position: fixed; z-index: 24; top: 14px; left: 14px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); color: var(--muted); cursor: pointer; font-size: 11px; font-weight: 800; }
 
 .tutor-panel { position: fixed; z-index: 20; inset: 0 0 0 auto; width: var(--right-panel-width); display: flex; flex-direction: column; overflow: hidden; border-left: 1px solid var(--line); background: var(--surface); }
-.panel-header { display: flex; align-items: center; justify-content: space-between; padding: 0 13px 0 16px; border-bottom: 1px solid var(--line); }
+.panel-header { display: flex; flex: none; min-height: 58px; align-items: center; justify-content: space-between; padding: 8px 13px 7px 16px; border-bottom: 1px solid var(--line); }
 .panel-header > div { display: grid; gap: 2px; }
 .panel-header strong { font-size: 13px; }
 .panel-kicker { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
