@@ -329,7 +329,7 @@ textarea { width: 100%; resize: vertical; padding: 15px; border: 1px solid var(-
 .feedback .feedback-context { padding: 9px 11px; border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 12px; }
 .feedback details { color: var(--body); }
 .feedback summary { cursor: pointer; color: var(--ink); font-weight: 700; }
-.quiz-actions { position: sticky; bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 20px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface-raised) 93%, transparent); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
+.quiz-actions { position: sticky; z-index: 40; bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-top: 20px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--surface-raised) 93%, transparent); box-shadow: var(--shadow); backdrop-filter: blur(16px); }
 .quiz-actions strong, .quiz-actions span { display: block; }
 .quiz-actions span { margin-top: 4px; color: var(--muted); font-size: 12px; }
 .quiz-action-buttons { display: flex; flex: none; gap: 9px; }
