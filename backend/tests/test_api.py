@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -30,7 +31,12 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
     assert '<html lang="en" data-theme="light">' in response.text
     assert "sandbox allow-scripts allow-same-origin allow-presentation" in response.headers["content-security-policy"]
     assert "frame-src https://www.youtube-nocookie.com" in response.headers["content-security-policy"]
-    assert "script-src 'none'" in response.headers["content-security-policy"]
+    nonce_match = re.search(r'<script nonce="([^"]+)">', response.text)
+    assert nonce_match is not None
+    assert (
+        f"script-src 'nonce-{nonce_match.group(1)}'"
+        in response.headers["content-security-policy"]
+    )
     assert response.headers["referrer-policy"] == "strict-origin-when-cross-origin"
     assert "body { height:100%; margin:0; overflow:auto;" in response.text
     assert "article { width:min(100%,920px); margin:0 auto; padding:36px 20px 60px;" in response.text
@@ -44,6 +50,8 @@ def test_rendered_lesson_uses_shared_theme_and_csp(tmp_path: Path, monkeypatch) 
     assert 'title="YouTube embedded player demonstration"' in response.text
     assert '<dfn class="concept-term" tabindex="0"' in response.text
     assert 'class="concept-card"' in response.text
+    assert "--concept-card-shift-x" in response.text
+    assert "keepCardInView" in response.text
     assert "The point where two components exchange defined messages" in response.text
     assert 'data-concept-id="protocol-boundary"' not in response.text
 

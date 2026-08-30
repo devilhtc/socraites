@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import secrets
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -75,14 +76,15 @@ def _lesson_theme_tokens(
     }
 
 # YouTube's player needs scripts, same-origin state, and an origin referrer in its
-# nested frame. script-src still blocks every script in the lesson document itself.
+# nested frame. The nonce permits only the server-owned concept-card helper in the
+# lesson document; authored scripts remain blocked.
 LESSON_CSP = "; ".join(
     (
         "sandbox allow-scripts allow-same-origin allow-presentation",
         "default-src 'none'",
         "style-src 'unsafe-inline'",
         "img-src data:",
-        "script-src 'none'",
+        "script-src 'nonce-{{NONCE}}'",
         "connect-src 'none'",
         "font-src 'none'",
         "media-src 'none'",
@@ -151,8 +153,8 @@ LESSON_SHELL = """<!doctype html>
     .concept p { margin:0; }
     .concept-term { position:relative; color:var(--teal); font-style:normal; font-weight:700; text-decoration:underline dotted; text-decoration-thickness:1px; text-underline-offset:.2em; cursor:help; outline:none; }
     .concept-term:focus-visible { border-radius:4px; box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 35%,transparent); }
-    .concept-card { position:absolute; z-index:20; top:calc(100% + 10px); left:50%; display:block; width:min(320px,72vw); padding:16px 18px; border:1px solid var(--line); border-radius:12px; background:var(--panel-strong); box-shadow:0 14px 36px rgba(0,0,0,.24); color:var(--body); font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif; text-align:left; text-decoration:none; transform:translate(-50%,-4px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .13s ease,transform .13s ease,visibility 0s linear .13s; }
-    .concept-term:hover .concept-card,.concept-term:focus .concept-card { opacity:1; visibility:visible; transform:translate(-50%,0); transition-delay:0s; }
+    .concept-card { position:absolute; z-index:20; top:calc(100% + 10px); left:50%; display:block; width:min(320px,calc(100vw - 32px)); padding:16px 18px; border:1px solid var(--line); border-radius:12px; background:var(--panel-strong); box-shadow:0 14px 36px rgba(0,0,0,.24); color:var(--body); font:14px/1.5 Inter,ui-sans-serif,system-ui,sans-serif; text-align:left; text-decoration:none; transform:translate(calc(-50% + var(--concept-card-shift-x,0px)),-4px); opacity:0; visibility:hidden; pointer-events:none; transition:opacity .13s ease,visibility 0s linear .13s; }
+    .concept-term:hover .concept-card,.concept-term:focus .concept-card { opacity:1; visibility:visible; transform:translate(calc(-50% + var(--concept-card-shift-x,0px)),0); transition-delay:0s; }
     .concept-card-title,.concept-card-definition { display:block; }
     .concept-card-title { margin-bottom:5px; color:var(--ink); font-size:13px; letter-spacing:.04em; }
     .trace { display:grid; gap:10px; margin:24px 0; }
@@ -176,7 +178,42 @@ LESSON_SHELL = """<!doctype html>
     @media (max-width:600px) { article { padding:34px 18px 64px; } h1 { font-size:42px; } }
   </style>
 </head>
-<body><article>{{CONTENT}}</article></body>
+<body><article>{{CONTENT}}</article>
+<script nonce="{{NONCE}}">
+  (() => {
+    const edgeGap = 16;
+    let activeTerm = null;
+
+    function keepCardInView(term) {
+      const card = term.querySelector('.concept-card');
+      if (!card) return;
+      card.style.setProperty('--concept-card-shift-x', '0px');
+      const bounds = card.getBoundingClientRect();
+      const leftShift = Math.max(0, edgeGap - bounds.left);
+      const rightShift = Math.min(0, window.innerWidth - edgeGap - bounds.right);
+      card.style.setProperty('--concept-card-shift-x', `${leftShift || rightShift}px`);
+    }
+
+    document.querySelectorAll('.concept-term').forEach((term) => {
+      const activate = () => {
+        activeTerm = term;
+        keepCardInView(term);
+      };
+      term.addEventListener('pointerenter', activate);
+      term.addEventListener('focus', activate);
+      term.addEventListener('pointerleave', () => {
+        if (document.activeElement !== term) activeTerm = null;
+      });
+      term.addEventListener('blur', () => {
+        activeTerm = null;
+      });
+    });
+    window.addEventListener('resize', () => {
+      if (activeTerm) keepCardInView(activeTerm);
+    });
+  })();
+</script>
+</body>
 </html>"""
 
 
@@ -430,10 +467,19 @@ def create_app(
         fragment = render_youtube_embeds(fragment)
         fragment = await mermaid_renderer.render_fragment(fragment)
         fragment = await syntax_highlighter.render_fragment(fragment)
-        rendered = LESSON_SHELL.replace("{{THEME}}", theme).replace("{{CONTENT}}", fragment)
+        nonce = secrets.token_urlsafe(18)
+        rendered = (
+            LESSON_SHELL.replace("{{THEME}}", theme)
+            .replace("{{CONTENT}}", fragment)
+            .replace("{{NONCE}}", nonce)
+        )
         for placeholder, value in _lesson_theme_tokens(theme, accent, background).items():
             rendered = rendered.replace(placeholder, value)
-        return HTMLResponse(rendered, headers=LESSON_HEADERS)
+        headers = {
+            **LESSON_HEADERS,
+            "Content-Security-Policy": LESSON_CSP.replace("{{NONCE}}", nonce),
+        }
+        return HTMLResponse(rendered, headers=headers)
 
     @application.post(
         "/api/courses/{course_id}/lessons/{lesson_id}/attempts",
