@@ -141,6 +141,11 @@ LESSON_SHELL = """<!doctype html>
     .hljs-strong { font-weight:700; }
     .syntax-error,.youtube-error { margin:28px 0; padding:18px 20px; border:1px solid var(--accent); border-radius:14px; background:var(--panel); }
     .syntax-error p,.youtube-error p { margin:0 0 12px; }
+    .lesson-bridge { max-width:760px; margin:0 0 18px; color:var(--muted); font-size:14px; line-height:1.55; }
+    .lesson-opening { max-width:780px; margin:0 0 34px; padding:20px 22px; border-left:3px solid var(--line); background:var(--panel); border-radius:0 14px 14px 0; }
+    .lesson-opening p { margin:0; }
+    .lesson-opening p + p { margin-top:12px; }
+    .lesson-opening .lead { margin-top:12px; }
     .lead { color:var(--ink); font-size:21px; line-height:1.6; }
     .concept { margin:28px 0; padding:22px 24px; border-left:3px solid var(--accent); background:var(--panel); border-radius:0 14px 14px 0; }
     .concept p { margin:0; }
@@ -345,6 +350,8 @@ def create_app(
                 lesson_html,
                 lesson_quiz,
                 course.concepts,
+                course.lessons,
+                lesson.id,
                 history,
                 user_text,
             )

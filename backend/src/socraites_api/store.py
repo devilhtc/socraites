@@ -156,6 +156,27 @@ class CourseStore:
             raise InvalidDataError("edited lesson is too large")
         if re.search(r"<\s*(?:html|head|body|style|script|form|iframe)\b", fragment, re.IGNORECASE):
             raise InvalidDataError("edited lesson contains a forbidden HTML element")
+        opening_tag = '<div class="lesson-opening">'
+        bridge_tag = '<p class="lesson-bridge">'
+        if fragment.count(opening_tag) != 1:
+            raise InvalidDataError("edited lesson must preserve exactly one lesson-opening")
+        opening_start = fragment.index(opening_tag)
+        opening_end = fragment.find("</div>", opening_start)
+        h1_end = fragment.find("</h1>")
+        h2_start = fragment.find("<h2")
+        if opening_end < 0 or h1_end < 0 or not h1_end < opening_start < h2_start:
+            raise InvalidDataError("edited lesson-opening must appear after h1 and before the first h2")
+        opening_html = fragment[opening_start:opening_end]
+        if opening_html.count("<p") < 2 or opening_html.count('<p class="lead">') != 1:
+            raise InvalidDataError("edited lesson-opening needs two paragraphs and exactly one lead")
+        lesson_index = next(index for index, item in enumerate(manifest.lessons) if item.id == lesson_id)
+        bridge_count = fragment.count(bridge_tag)
+        if lesson_index == 0 and bridge_count:
+            raise InvalidDataError("the first lesson must not have a lesson-bridge")
+        if lesson_index > 0:
+            bridge_start = fragment.find(bridge_tag)
+            if bridge_count != 1 or not 0 <= bridge_start < fragment.find("<h1"):
+                raise InvalidDataError("later lessons must preserve one lesson-bridge before h1")
         try:
             validate_concept_references(fragment, manifest.concepts)
         except ConceptMarkupError as exc:

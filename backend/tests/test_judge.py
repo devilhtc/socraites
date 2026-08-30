@@ -61,6 +61,8 @@ def test_tutor_agent_edits_only_staged_course_assets(tmp_path: Path, monkeypatch
             lesson_html,
             quiz,
             course.concepts,
+            course.lessons,
+            lesson.id,
             [],
             "Expand this chapter and quiz.",
         )
@@ -71,6 +73,9 @@ def test_tutor_agent_edits_only_staged_course_assets(tmp_path: Path, monkeypatch
     assert "Teach Socratically in short turns" in str(observed["prompt"])
     assert "Never paste a complete lesson" in str(observed["prompt"])
     assert "COURSE CONCEPT INDEX" in str(observed["prompt"])
+    assert "COURSE OUTLINE" in str(observed["prompt"])
+    assert "AUTHORING REFERENCE" in str(observed["prompt"])
+    assert "lean concrete scenario" in str(observed["prompt"])
     assert "Added by the tutor" in reply.lesson_html
     assert json.loads(reply.quiz_json)["title"] == "Expanded protocol boundary check"
     assert reply.text.startswith("Updated the lesson and quiz directly.")

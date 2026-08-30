@@ -215,13 +215,26 @@ def test_generated_questions_are_private_and_survive_restart(tmp_path: Path, mon
 def test_tutor_conversation_uses_chapter_context_and_survives_restart(tmp_path: Path, monkeypatch) -> None:
     captured: dict[str, object] = {}
 
-    async def tutor(_self, course_title, lesson_title, lesson_html, quiz, concepts, history, user_text):
+    async def tutor(
+        _self,
+        course_title,
+        lesson_title,
+        lesson_html,
+        quiz,
+        concepts,
+        course_outline,
+        current_lesson_id,
+        history,
+        user_text,
+    ):
         captured.update({
             "course_title": course_title,
             "lesson_title": lesson_title,
             "lesson_html": lesson_html,
             "quiz": quiz,
             "concepts": concepts,
+            "course_outline": course_outline,
+            "current_lesson_id": current_lesson_id,
             "history": history,
             "user_text": user_text,
         })
@@ -249,6 +262,8 @@ def test_tutor_conversation_uses_chapter_context_and_survives_restart(tmp_path: 
     assert captured["course_title"] == "Test Course"
     assert captured["lesson_title"] == "Protocol boundary"
     assert len(captured["concepts"]) == 2
+    assert len(captured["course_outline"]) == 1
+    assert captured["current_lesson_id"] == "boundary"
     assert 'data-concept-id="protocol-boundary"' in str(captured["lesson_html"])
     assert captured["user_text"] == "What boundary does ACP create?"
 

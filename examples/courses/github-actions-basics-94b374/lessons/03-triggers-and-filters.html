@@ -1,6 +1,10 @@
 <p class="eyebrow">Lesson 3 · Triggers</p>
+<p class="lesson-bridge">The previous lesson built a repeatable test job. A correct job still wastes time if it runs for irrelevant changes, and it provides no protection if the event you care about never starts it.</p>
 <h1>Run the right workflow at the right time.</h1>
-<p class="lead">The best job definition is useless if its event never matches. Choose the trigger from who or what should start the work.</p>
+<div class="lesson-opening">
+  <p>A documentation edit starts a costly deployment, while a pull request that changes application code shows no test check at all. The commands may be correct in both workflow files. The mismatch happens earlier, where repository activity is translated into runs.</p>
+  <p class="lead">Choose the trigger from who or what should start the work, then narrow it with filters that express when that event matters.</p>
+</div>
 
 <h2>Use repository events for repository activity</h2>
 <p><code>push</code>, <code>pull_request</code>, and <code>release</code> react to activity GitHub already knows about. Pick the <span class="concept-ref" data-concept-id="trigger">trigger</span> whose payload and timing match the work, not merely the event that is easiest to remember.</p>

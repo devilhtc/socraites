@@ -91,4 +91,12 @@ def test_tutor_edits_are_validated_and_persisted_to_one_lesson(tmp_path: Path) -
             quiz.model_dump_json(indent=2),
         )
 
+    with pytest.raises(InvalidDataError, match="lesson-opening"):
+        store.update_lesson_assets(
+            course_id,
+            lesson_id,
+            original_html.replace('<div class="lesson-opening">', '<div class="opening">'),
+            quiz.model_dump_json(indent=2),
+        )
+
     assert "A tutor-authored example" in store.lesson_html(course_id, lesson_id)[1]

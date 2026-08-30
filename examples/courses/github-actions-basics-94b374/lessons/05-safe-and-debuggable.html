@@ -1,6 +1,10 @@
 <p class="eyebrow">Lesson 5 · Operations</p>
+<p class="lesson-bridge">The job graph now runs the right work and moves the intended data. Before trusting it, account for what else enters the run: repository permissions, forked code, issue text, third-party actions, and failures outside GitHub.</p>
 <h1>Limit power and make failures explain themselves.</h1>
-<p class="lead">A workflow runs code with access to a repository and sometimes other systems. Safe permissions and layered debugging belong in the first version, not a later cleanup.</p>
+<div class="lesson-opening">
+  <p>A pull request from a fork changes both code and a title that the workflow inserts into a shell command. The job also has permission to write releases even though it only runs tests. One careless string or compromised action now has more power than the task needs.</p>
+  <p class="lead">Treat workflow inputs as untrusted, grant the job only the permissions it needs, and leave evidence at each layer so a failure can be located without guesswork.</p>
+</div>
 
 <h2>Grant the built-in token only what the job needs</h2>
 <p>Declare <code>permissions</code> for the <span class="concept-ref" data-concept-id="github-token">built-in job token</span> instead of relying on a broad default. Start with no permission or read-only repository contents, then add a specific write permission only to the job that performs that operation.</p>

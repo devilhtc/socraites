@@ -67,16 +67,42 @@ class LessonParser(HTMLParser):
         self.mermaid_has_invalid_wrapper = False
         self._in_mermaid = False
         self._mermaid_parts: list[str] = []
+        self.h1_seen = False
+        self.opening_count = 0
+        self.opening_paragraph_count = 0
+        self.opening_lead_count = 0
+        self.opening_in_teaching_position = True
+        self.opening_has_invalid_wrapper = False
+        self._in_opening = False
+        self.bridge_count = 0
+        self.bridge_before_heading = True
+        self.bridge_has_invalid_wrapper = False
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in FORBIDDEN_TAGS:
             self.forbidden.add(tag)
+        attributes = dict(attrs)
+        classes = (attributes.get("class") or "").split()
+        if tag == "h1":
+            self.h1_seen = True
         if tag == "h2":
             self.h2_count += 1
+        if tag == "div" and "lesson-opening" in classes:
+            self.opening_count += 1
+            self.opening_in_teaching_position &= self.h1_seen and self.h2_count == 0
+            self.opening_has_invalid_wrapper |= self.get_starttag_text() != '<div class="lesson-opening">'
+            self._in_opening = True
+        if tag == "p" and self._in_opening:
+            self.opening_paragraph_count += 1
+            if "lead" in classes:
+                self.opening_lead_count += 1
+        if tag == "p" and "lesson-bridge" in classes:
+            self.bridge_count += 1
+            self.bridge_before_heading &= not self.h1_seen
+            self.bridge_has_invalid_wrapper |= self.get_starttag_text() != '<p class="lesson-bridge">'
         if tag == "summary":
             self._in_summary = True
             self._summary_parts = []
-        attributes = dict(attrs)
         if tag == "pre" and "mermaid" in (attributes.get("class") or "").split():
             if self.get_starttag_text() != '<pre class="mermaid">':
                 self.mermaid_has_invalid_wrapper = True
@@ -92,6 +118,8 @@ class LessonParser(HTMLParser):
         if tag == "pre" and self._in_mermaid:
             self.mermaid_sources.append("".join(self._mermaid_parts).strip())
             self._in_mermaid = False
+        if tag == "div" and self._in_opening:
+            self._in_opening = False
 
     def handle_data(self, data: str) -> None:
         self.text_parts.append(data)
@@ -213,7 +241,12 @@ def bounded_file(root: Path, relative: Any, label: str, errors: list[str]) -> Pa
     return candidate
 
 
-def validate_lesson(path: Path, concept_ids: set[str], errors: list[str]) -> set[str]:
+def validate_lesson(
+    path: Path,
+    concept_ids: set[str],
+    requires_bridge: bool,
+    errors: list[str],
+) -> set[str]:
     source_html = path.read_text(encoding="utf-8")
     parser = LessonParser()
     try:
@@ -226,6 +259,25 @@ def validate_lesson(path: Path, concept_ids: set[str], errors: list[str]) -> set
     word_count = len(re.findall(r"\b[\w'-]+\b", " ".join(parser.text_parts)))
     if word_count >= 500:
         errors.append(f"{path} has {word_count} words; lessons must stay below 500")
+    if parser.opening_count != 1:
+        errors.append(f"{path} must contain exactly one <div class=\"lesson-opening\">")
+    elif not parser.opening_in_teaching_position:
+        errors.append(f"{path} lesson-opening must appear after h1 and before the first h2")
+    if parser.opening_has_invalid_wrapper:
+        errors.append(f'{path} must use the exact opening tag <div class="lesson-opening">')
+    if parser.opening_paragraph_count < 2:
+        errors.append(f"{path} lesson-opening needs at least two paragraphs")
+    if parser.opening_lead_count != 1:
+        errors.append(f"{path} lesson-opening must contain exactly one p.lead")
+    if requires_bridge:
+        if parser.bridge_count != 1:
+            errors.append(f"{path} must contain exactly one <p class=\"lesson-bridge\">")
+        elif not parser.bridge_before_heading:
+            errors.append(f"{path} lesson-bridge must appear before h1")
+    elif parser.bridge_count:
+        errors.append(f"{path} is the first lesson and must not contain lesson-bridge")
+    if parser.bridge_has_invalid_wrapper:
+        errors.append(f'{path} must use the exact opening tag <p class="lesson-bridge">')
     details_count = source_html.count("<details")
     if details_count != source_html.count("<details><summary>"):
         errors.append(f"{path} must keep every <details><summary> opening on one line")
@@ -489,7 +541,9 @@ def validate_course(root: Path) -> list[str]:
         lesson_path = bounded_file(root, lesson.get("lesson_file"), f"{label}.lesson_file", errors)
         quiz_path = bounded_file(root, lesson.get("quiz_file"), f"{label}.quiz_file", errors)
         if lesson_path:
-            referenced_concepts.update(validate_lesson(lesson_path, set(concept_ids), errors))
+            referenced_concepts.update(
+                validate_lesson(lesson_path, set(concept_ids), index > 0, errors)
+            )
         if quiz_path:
             validate_quiz(quiz_path, errors)
     if len(lesson_ids) != len(set(lesson_ids)):

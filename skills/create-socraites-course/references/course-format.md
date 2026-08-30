@@ -75,8 +75,12 @@ Allowed presentation patterns include:
 
 ```html
 <p class="eyebrow">Lesson 1 · Core idea</p>
+<p class="lesson-bridge">The previous lesson established one useful result. This lesson follows the question it leaves open.</p>
 <h1>The lesson's teaching headline.</h1>
-<p class="lead">Name the problem this lesson will help the learner solve.</p>
+<div class="lesson-opening">
+  <p>Walk through a concrete situation before naming the formal idea.</p>
+  <p class="lead">State the observation and the principle the lesson will explain.</p>
+</div>
 
 <h2>One learning point</h2>
 <p>Explain one idea in plain language before introducing exceptions or terminology.</p>
@@ -90,6 +94,8 @@ Allowed presentation patterns include:
 
 <details><summary>Example: a concrete case</summary><div><p>Show how the learning point behaves in a realistic situation.</p></div></details>
 ```
+
+The first lesson omits `lesson-bridge`. Every later lesson includes exactly one bridge after the eyebrow and before the heading. Every lesson includes exactly one `lesson-opening` before the first `h2`; it contains at least two paragraphs, including one `p.lead`. Follow the scenario-to-principle method in [lesson-pedagogy.md](lesson-pedagogy.md). These elements are teaching structure, not decorative copy.
 
 ### Mermaid diagrams
 
@@ -146,6 +152,7 @@ Quality requirements:
 
 - Fewer than 500 words per lesson fragment.
 - One coherent idea per lesson; split dense material into more lessons.
+- A concrete opening before abstraction, plus a short continuity bridge in every lesson after the first.
 - A small course-level concept index with at least one linked concept in every lesson.
 - Every substantive learning point has at least one example.
 - At least three `<details><summary>Example: …</summary>` blocks per lesson.

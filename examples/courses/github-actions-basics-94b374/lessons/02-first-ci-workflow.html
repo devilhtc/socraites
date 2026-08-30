@@ -1,6 +1,10 @@
 <p class="eyebrow">Lesson 2 · First workflow</p>
+<p class="lesson-bridge">The first lesson followed an event into a workflow run, then down through jobs, runners, and steps. Now turn that mental model into a file that runs the project's real test command.</p>
 <h1>Turn a small YAML file into repeatable CI.</h1>
-<p class="lead">A useful first workflow checks every pull request and main-branch push with the same install and test commands.</p>
+<div class="lesson-opening">
+  <p>Your tests pass on your laptop because its dependencies are already installed. A teammate's fresh clone fails. To make the result trustworthy, the check must begin from the same clean setup every time.</p>
+  <p class="lead">A small workflow can install the project and run its tests on every pull request and main-branch push, using one repeatable sequence instead of each developer's memory.</p>
+</div>
 
 <h2>Put the file where GitHub looks</h2>
 <p>Create <code>.github/workflows/ci.yml</code>. The filename is for humans; the keys inside define the <span class="concept-ref" data-concept-id="workflow">workflow's</span> display name, triggers, permissions, and jobs.</p>

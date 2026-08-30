@@ -8,7 +8,8 @@ The application stores courses and learner activity as ordinary local files. Not
 
 - A React/Vite lesson player with light and dark themes
 - A FastAPI backend with file-backed persistence
-- Bite-sized HTML lessons with course-indexed concept cards, Mermaid diagrams, syntax-highlighted code, and privacy-enhanced YouTube embeds
+- Bite-sized, scenario-led HTML lessons with gentle continuity between chapters
+- Course-indexed concept cards, Mermaid diagrams, syntax-highlighted code, and privacy-enhanced YouTube embeds
 - Single-choice, multiple-choice, ordering, and free-response questions
 - Refresh-safe drafts, immutable attempts, progress, generated questions, and tutor history
 - Deterministic local grading for structured questions

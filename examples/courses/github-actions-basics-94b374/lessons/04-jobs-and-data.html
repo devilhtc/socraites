@@ -1,6 +1,10 @@
 <p class="eyebrow">Lesson 4 · Job graph</p>
+<p class="lesson-bridge">Triggers decide whether a workflow run exists. Once it does, the next design choice is the job graph: which work can happen together, which work must wait, and what data crosses each runner boundary.</p>
 <h1>Connect work without assuming a shared machine.</h1>
-<p class="lead">Jobs can run in parallel, wait for one another, and exchange selected data. Those boundaries make a workflow faster and easier to reason about.</p>
+<div class="lesson-opening">
+  <p>Tests and linting can start together, but deployment must wait for both. The build finishes on one runner, then deployment starts on another and cannot find the generated files. Ordering alone did not move the result.</p>
+  <p class="lead">Model real dependencies with <code>needs</code>, and choose an explicit output, artifact, or cache for each kind of data that must cross a job boundary.</p>
+</div>
 
 <h2>Add dependencies only where they are real</h2>
 <p>Jobs run independently unless <code>needs</code> adds a <span class="concept-ref" data-concept-id="job-dependency">job dependency</span>. A deployment that consumes a tested build should wait for the build. Linting and unit tests often have no reason to wait for each other.</p>
