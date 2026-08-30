@@ -42,7 +42,7 @@ function feedbackTone(score: number): "correct" | "partial" | "incorrect" {
   return "incorrect";
 }
 
-function move<T>(items: T[], from: number, to: number): T[] {
+export function move<T>(items: T[], from: number, to: number): T[] {
   if (to < 0 || to >= items.length) return items;
   const copy = [...items];
   const [item] = copy.splice(from, 1);
@@ -254,6 +254,17 @@ function QuestionInput({
   onChange: (value: unknown) => void;
 }) {
   const options = question.options ?? [];
+  const [draggedOptionId, setDraggedOptionId] = useState<string | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
+  const draggedOptionRef = useRef<string | null>(null);
+  const dropTargetRef = useRef<string | null>(null);
+
+  function resetOrderingDrag() {
+    draggedOptionRef.current = null;
+    dropTargetRef.current = null;
+    setDraggedOptionId(null);
+    setDropTargetId(null);
+  }
 
   if (question.type === "single_choice") {
     return (
@@ -306,13 +317,83 @@ function QuestionInput({
         ? (value as string[])
         : options.map((option) => option.id);
     return (
-      <ol className="ordering-list">
+      <ol className="ordering-list" aria-label="Drag items or use the arrow buttons to reorder them">
         {orderedIds.map((optionId, index) => {
           const option = optionMap.get(optionId);
           if (!option) return null;
           return (
-            <li key={option.id}>
-              <span>{option.label}</span>
+            <li
+              className={`${draggedOptionId === option.id ? "dragging" : ""} ${dropTargetId === option.id ? "drop-target" : ""}`}
+              data-order-option-id={option.id}
+              draggable={!disabled}
+              key={option.id}
+              onDragStart={(event) => {
+                if (disabled) {
+                  event.preventDefault();
+                  return;
+                }
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", option.id);
+                draggedOptionRef.current = option.id;
+                setDraggedOptionId(option.id);
+              }}
+              onDragOver={(event) => {
+                if (disabled || draggedOptionRef.current === option.id) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "move";
+                dropTargetRef.current = option.id;
+                setDropTargetId(option.id);
+              }}
+              onDrop={(event) => {
+                event.preventDefault();
+                const sourceId = event.dataTransfer.getData("text/plain") || draggedOptionRef.current;
+                const sourceIndex = sourceId ? orderedIds.indexOf(sourceId) : -1;
+                if (!disabled && sourceIndex >= 0 && sourceIndex !== index) {
+                  onChange(move(orderedIds, sourceIndex, index));
+                }
+                resetOrderingDrag();
+              }}
+              onDragEnd={resetOrderingDrag}
+            >
+              <span
+                className="order-drag-handle"
+                aria-hidden="true"
+                title="Drag to reorder"
+                onPointerDown={(event) => {
+                  if (disabled) return;
+                  event.preventDefault();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  draggedOptionRef.current = option.id;
+                  setDraggedOptionId(option.id);
+                }}
+                onPointerMove={(event) => {
+                  if (disabled || draggedOptionRef.current !== option.id) return;
+                  const target = document
+                    .elementFromPoint(event.clientX, event.clientY)
+                    ?.closest<HTMLElement>("[data-order-option-id]");
+                  const targetId = target?.dataset.orderOptionId ?? null;
+                  const nextTarget = targetId && targetId !== option.id ? targetId : null;
+                  if (dropTargetRef.current !== nextTarget) {
+                    dropTargetRef.current = nextTarget;
+                    setDropTargetId(nextTarget);
+                  }
+                }}
+                onPointerUp={(event) => {
+                  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                    event.currentTarget.releasePointerCapture(event.pointerId);
+                  }
+                  const sourceIndex = orderedIds.indexOf(option.id);
+                  const targetIndex = dropTargetRef.current
+                    ? orderedIds.indexOf(dropTargetRef.current)
+                    : -1;
+                  if (!disabled && sourceIndex >= 0 && targetIndex >= 0 && sourceIndex !== targetIndex) {
+                    onChange(move(orderedIds, sourceIndex, targetIndex));
+                  }
+                  resetOrderingDrag();
+                }}
+                onPointerCancel={resetOrderingDrag}
+              >⋮⋮</span>
+              <span className="order-label">{option.label}</span>
               <span className="order-controls">
                 <button
                   type="button"

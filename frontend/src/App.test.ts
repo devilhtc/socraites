@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { answersForRetry, feedbackLabel, nextLessonId, pointLabel } from "./App";
+import { answersForRetry, feedbackLabel, move, nextLessonId, pointLabel } from "./App";
 import type { AttemptResult, PublicQuiz } from "./types";
 
 const quiz = {
@@ -63,6 +63,17 @@ describe("section progression", () => {
 
   it("returns no next section after the final one", () => {
     expect(nextLessonId(lessons, "lifecycle")).toBeNull();
+  });
+});
+
+describe("ordering questions", () => {
+  it("moves a dragged item to the selected drop position", () => {
+    expect(move(["initialize", "session", "prompt", "cancel"], 0, 2)).toEqual([
+      "session",
+      "prompt",
+      "initialize",
+      "cancel",
+    ]);
   });
 });
 

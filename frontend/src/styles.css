@@ -307,8 +307,14 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 textarea { width: 100%; resize: vertical; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-raised); color: var(--ink); line-height: 1.55; }
 .field-hint { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 .ordering-list { display: grid; gap: 8px; padding: 0; list-style: none; counter-reset: order; }
-.ordering-list li { counter-increment: order; display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-raised); }
-.ordering-list li > span:first-child::before { content: counter(order) ". "; color: var(--accent); font-weight: 800; }
+.ordering-list li { counter-increment: order; display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; background: var(--surface-raised); transition: border-color .12s ease, background .12s ease, opacity .12s ease, transform .12s ease; }
+.ordering-list li[draggable="true"] { cursor: grab; }
+.ordering-list li[draggable="true"]:active { cursor: grabbing; }
+.ordering-list li.dragging { opacity: .42; }
+.ordering-list li.drop-target { border-color: var(--accent); background: var(--accent-soft); transform: translateY(1px); }
+.order-drag-handle { padding: 8px 4px; color: var(--muted); cursor: grab; font-weight: 900; letter-spacing: -3px; touch-action: none; user-select: none; }
+.ordering-list li.dragging .order-drag-handle { cursor: grabbing; }
+.order-label::before { content: counter(order) ". "; color: var(--accent); font-weight: 800; }
 .order-controls { display: flex; gap: 6px; }
 .order-controls button { width: 31px; height: 31px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
 .order-controls button:disabled { opacity: .3; cursor: default; }
