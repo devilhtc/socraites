@@ -52,6 +52,7 @@ export type CourseSummary = {
   description: string;
   section_count: number;
   estimated_minutes: number;
+  remaining_minutes: number;
   completed_sections: number;
   progress: number;
   last_opened_at: string | null;

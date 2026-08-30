@@ -75,6 +75,18 @@ def test_rendered_lesson_accepts_validated_custom_colors(tmp_path: Path, monkeyp
     assert invalid.status_code == 422
 
 
+def test_course_summary_reports_exact_remaining_minutes(tmp_path: Path, monkeypatch) -> None:
+    client = make_client(tmp_path, monkeypatch)
+
+    response = client.get("/api/courses")
+
+    assert response.status_code == 200
+    summary = next(item for item in response.json() if item["id"] == "test-course-a1b2c3")
+    assert summary["completed_sections"] == 0
+    assert summary["section_count"] == 1
+    assert summary["remaining_minutes"] == 5
+
+
 def test_attempt_is_graded_and_written_to_files(tmp_path: Path, monkeypatch) -> None:
     client = make_client(tmp_path, monkeypatch)
 

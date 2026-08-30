@@ -620,22 +620,19 @@ function Dashboard({
                 </div>
               </div>
             )}
-            {activeCourses.map((course, index) => {
+            {activeCourses.map((course) => {
             const percent = Math.round(course.progress * 100);
             return (
               <article className="course-card" key={course.id}>
-                <div className="course-card-top">
-                  <span className="course-index">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="course-status">{percent ? `${percent}% complete` : "Ready to begin"}</span>
-                </div>
                 <p className="kicker">{course.category}</p>
                 <h2>{course.title}</h2>
                 <p>{course.description}</p>
                 <div className="course-meta">
-                  <span>{course.section_count} sections</span>
-                  <span>{course.estimated_minutes} minutes</span>
+                  <span>{course.completed_sections}/{course.section_count} sections complete</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{course.remaining_minutes} min remaining</span>
                 </div>
-                <div className="course-card-progress" aria-label={`${percent}% complete`}>
+                <div className="course-card-progress" aria-label={`${course.completed_sections} of ${course.section_count} sections complete`}>
                   <i style={{ width: `${percent}%` }} />
                 </div>
                 <button className="primary-button course-open" type="button" onClick={() => onOpen(course.id)}>

@@ -257,6 +257,11 @@ def create_app(
         for course in course_store.list_courses():
             progress = progress_store.read(course.id)
             completed = sum(1 for item in progress.lessons.values() if item.passed)
+            remaining_minutes = sum(
+                item.estimated_minutes
+                for item in course.lessons
+                if not progress.lessons.get(item.id) or not progress.lessons[item.id].passed
+            )
             workspace = progress_store.workspace(course.id, course.lessons[0].id)
             summaries.append({
                 "id": course.id,
@@ -266,6 +271,7 @@ def create_app(
                 "description": course.description,
                 "section_count": len(course.lessons),
                 "estimated_minutes": sum(item.estimated_minutes for item in course.lessons),
+                "remaining_minutes": remaining_minutes,
                 "completed_sections": completed,
                 "progress": completed / len(course.lessons),
                 "last_opened_at": workspace.updated_at,
