@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { answersForRetry, nextLessonId } from "./App";
+import { answersForRetry, feedbackLabel, nextLessonId, pointLabel } from "./App";
 import type { AttemptResult, PublicQuiz } from "./types";
 
 const quiz = {
@@ -63,5 +63,27 @@ describe("section progression", () => {
 
   it("returns no next section after the final one", () => {
     expect(nextLessonId(lessons, "lifecycle")).toBeNull();
+  });
+});
+
+describe("graded question labels", () => {
+  it("calls high partial credit almost correct instead of correct", () => {
+    expect(feedbackLabel({
+      question_id: "explain",
+      score: 0.95,
+      earned_points: 4.75,
+      possible_points: 5,
+      verdict: "partial",
+      feedback: "Nearly there.",
+      explanation: "Explanation",
+      strengths: [],
+      improvements: [],
+      judge: "codex-acp",
+    })).toBe("Almost correct");
+  });
+
+  it("formats whole and fractional point totals without trailing zeroes", () => {
+    expect(pointLabel(5)).toBe("5");
+    expect(pointLabel(4.75)).toBe("4.75");
   });
 });

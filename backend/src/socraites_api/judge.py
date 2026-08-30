@@ -86,9 +86,9 @@ class LocalRubricJudge:
             score = 0.0
         verdict = (
             JudgeVerdict.CORRECT
-            if score >= 0.8
+            if score >= 0.999
             else JudgeVerdict.PARTIAL
-            if score >= 0.35
+            if score > 0
             else JudgeVerdict.INCORRECT
         )
         return JudgeResult(
@@ -201,7 +201,7 @@ class CodexAcpJudge:
         return f"""You are grading one learner response. Do not use tools, browse, run commands, or read files.
 Judge only against the supplied rubric and reference answer. Reward correct reasoning even when wording differs.
 Return exactly one JSON object with keys score, verdict, feedback, strengths, improvements.
-score is a number from 0 to 1. verdict is correct, partial, or incorrect. strengths and improvements are short arrays.
+score is a number from 0 to 1. Use verdict correct only with a score of 1. Use partial when the answer earns some but not all credit, including answers that are almost correct. Use incorrect with a score of 0. strengths and improvements are short arrays.
 
 QUESTION:
 {question.prompt}

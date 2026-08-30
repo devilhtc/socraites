@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 
 from socraites_api.judge import JudgeService, TutorReply
 from socraites_api.main import create_app
-from socraites_api.models import ChoiceOption, SingleChoiceQuestion
+from socraites_api.models import ChoiceOption, JudgeResult, JudgeVerdict, SingleChoiceQuestion
 
 
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures" / "courses"
@@ -143,6 +143,35 @@ def test_fill_paragraph_awards_credit_per_blank(tmp_path: Path, monkeypatch) -> 
     assert result["judge"] == "local-fill-paragraph"
     assert result["score"] == 0.5
     assert result["verdict"] == "partial"
+
+
+def test_free_response_verdict_follows_fractional_score(tmp_path: Path, monkeypatch) -> None:
+    async def almost_correct(_self, _question, _answer):
+        return JudgeResult(
+            score=0.95,
+            verdict=JudgeVerdict.CORRECT,
+            feedback="Almost complete.",
+            strengths=[],
+            improvements=["Add the final distinction."],
+            judge="test-judge",
+        )
+
+    monkeypatch.setattr(JudgeService, "judge", almost_correct)
+    client = make_client(tmp_path, monkeypatch)
+    response = client.post(
+        "/api/courses/test-course-a1b2c3/lessons/boundary/attempts",
+        json={"answers": {"boundary-explain": "A nearly complete explanation."}},
+    )
+
+    assert response.status_code == 200
+    result = next(
+        item for item in response.json()["results"]
+        if item["question_id"] == "boundary-explain"
+    )
+    assert result["score"] == 0.95
+    assert result["verdict"] == "partial"
+    assert result["earned_points"] == 1.9
+    assert result["possible_points"] == 2
 
 
 def test_navigation_and_draft_survive_a_fresh_app_instance(tmp_path: Path, monkeypatch) -> None:

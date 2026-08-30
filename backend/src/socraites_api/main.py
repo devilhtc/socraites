@@ -537,7 +537,7 @@ def create_app(
                         score=judged.score,
                         earned_points=round(judged.score * question.points, 2),
                         possible_points=question.points,
-                        verdict=judged.verdict,
+                        verdict=_verdict_for_score(judged.score),
                         feedback=judged.feedback,
                         explanation=question.explanation,
                         strengths=judged.strengths,
@@ -591,14 +591,16 @@ def _deterministic_result(question: Any, correct: bool) -> QuestionResult:
     return _scored_result(question, 1.0 if correct else 0.0, "local-exact")
 
 
+def _verdict_for_score(score: float) -> JudgeVerdict:
+    if score >= 0.999:
+        return JudgeVerdict.CORRECT
+    if score > 0:
+        return JudgeVerdict.PARTIAL
+    return JudgeVerdict.INCORRECT
+
+
 def _scored_result(question: Any, score: float, judge: str) -> QuestionResult:
-    verdict = (
-        JudgeVerdict.CORRECT
-        if score >= 0.999
-        else JudgeVerdict.PARTIAL
-        if score > 0
-        else JudgeVerdict.INCORRECT
-    )
+    verdict = _verdict_for_score(score)
     return QuestionResult(
         question_id=question.id,
         score=score,

@@ -25,6 +25,23 @@ function scoreLabel(score: number): string {
   return `${Math.round(score * 100)}%`;
 }
 
+export function pointLabel(points: number): string {
+  return Number.isInteger(points) ? String(points) : points.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+}
+
+export function feedbackLabel(result: AttemptResult["results"][number]): string {
+  if (result.score >= 0.999) return "Correct";
+  if (result.score >= 0.8) return "Almost correct";
+  if (result.score > 0) return "Partially correct";
+  return "Incorrect";
+}
+
+function feedbackTone(score: number): "correct" | "partial" | "incorrect" {
+  if (score >= 0.999) return "correct";
+  if (score > 0) return "partial";
+  return "incorrect";
+}
+
 function move<T>(items: T[], from: number, to: number): T[] {
   if (to < 0 || to >= items.length) return items;
   const copy = [...items];
@@ -571,6 +588,9 @@ function Dashboard({
   onOpen: (courseId: string) => void;
   onPaletteChange: (palette: Palette) => void;
 }) {
+  const activeCourses = courses.filter((course) => course.progress < 1);
+  const completedCourses = courses.filter((course) => course.progress >= 1);
+
   return (
     <div className="dashboard-shell">
       <header className="dashboard-topbar">
@@ -586,20 +606,21 @@ function Dashboard({
           <p>Short, structured lessons with saved drafts, retrieval practice, and feedback that waits for you.</p>
         </div>
         <div className="library-summary">
-          <span>{courses.length} {courses.length === 1 ? "lesson" : "lessons"} ready</span>
-          <span>Everything stored as local files</span>
+          <span>{activeCourses.length} {activeCourses.length === 1 ? "course" : "courses"} in progress</span>
+          <span>{completedCourses.length ? `${completedCourses.length} complete` : "Everything stored as local files"}</span>
         </div>
-        <section className="course-grid" aria-label="Available lessons">
-          {courses.length === 0 && (
-            <div className="empty-library">
-              <span aria-hidden="true">＋</span>
-              <div>
-                <h2>Create your first course</h2>
-                <p>Ask your coding agent to read <code>skills/create-socraites-course/SKILL.md</code> and add a course under <code>data/courses/</code>.</p>
+        {(courses.length === 0 || activeCourses.length > 0) && (
+          <section className="course-grid" aria-label="Available lessons">
+            {courses.length === 0 && (
+              <div className="empty-library">
+                <span aria-hidden="true">＋</span>
+                <div>
+                  <h2>Create your first course</h2>
+                  <p>Ask your coding agent to read <code>skills/create-socraites-course/SKILL.md</code> and add a course under <code>data/courses/</code>.</p>
+                </div>
               </div>
-            </div>
-          )}
-          {courses.map((course, index) => {
+            )}
+            {activeCourses.map((course, index) => {
             const percent = Math.round(course.progress * 100);
             return (
               <article className="course-card" key={course.id}>
@@ -622,8 +643,26 @@ function Dashboard({
                 </button>
               </article>
             );
-          })}
-        </section>
+            })}
+          </section>
+        )}
+        {completedCourses.length > 0 && (
+          <section className="completed-library" aria-label="Completed courses">
+            <div className="completed-library-heading">
+              <p className="kicker">Completed</p>
+              <span>{completedCourses.length} {completedCourses.length === 1 ? "course" : "courses"}</span>
+            </div>
+            <div className="completed-course-list">
+              {completedCourses.map((course) => (
+                <button className="completed-course-card" type="button" key={course.id} onClick={() => onOpen(course.id)}>
+                  <span className="completed-course-status">✓ Complete</span>
+                  <strong>{course.title}</strong>
+                  <span className="completed-course-arrow" aria-hidden="true">→</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
@@ -1155,7 +1194,15 @@ export default function App() {
                   && JSON.stringify(answers[question.id]) !== JSON.stringify(previousAttempt?.answers[question.id]);
                 return (
                   <article className="question-card" key={question.id}>
-                    <div className="question-meta"><span>Question {index + 1}</span><span>{question.points} points{quiz && index >= quiz.authored_question_count ? " · Generated practice" : ""}</span></div>
+                    <div className="question-meta">
+                      <span>Question {index + 1}</span>
+                      <span>
+                        {questionResult
+                          ? `${pointLabel(questionResult.earned_points)} / ${pointLabel(questionResult.possible_points)} points`
+                          : `${pointLabel(question.points)} points`}
+                        {quiz && index >= quiz.authored_question_count ? " · Generated practice" : ""}
+                      </span>
+                    </div>
                     {question.type !== "fill_paragraph" && <h3>{question.prompt}</h3>}
                     <QuestionInput
                       question={question}
@@ -1164,9 +1211,9 @@ export default function App() {
                       onChange={(value) => updateAnswer(question.id, value)}
                     />
                     {questionResult && (
-                      <div className={`feedback ${questionResult.verdict} ${isPreviousFeedback ? "previous" : ""}`}>
+                      <div className={`feedback ${feedbackTone(questionResult.score)} ${isPreviousFeedback ? "previous" : ""}`}>
                         <div className="feedback-title">
-                          <strong>{questionResult.verdict === "correct" ? "Correct" : questionResult.verdict === "partial" ? "Partially correct" : "Incorrect"}</strong>
+                          <strong>{feedbackLabel(questionResult)}</strong>
                           <span>{isPreviousFeedback ? "Previous answer · " : ""}{questionResult.judge}</span>
                         </div>
                         {answerChanged && <p className="feedback-context">You have changed this answer. This feedback still describes the previous submission.</p>}
