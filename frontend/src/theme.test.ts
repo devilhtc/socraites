@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PALETTE, paletteName, paletteTokens, restorePalette, themeMode } from "./theme";
+import { contrastText, DEFAULT_PALETTE, paletteName, paletteTokens, restorePalette, themeMode } from "./theme";
 
 describe("appearance palettes", () => {
   it("detects light and dark backgrounds", () => {
@@ -12,6 +12,12 @@ describe("appearance palettes", () => {
     expect(tokens["--page"]).toBe("#101820");
     expect(tokens["--accent"]).toBe("#42d6c3");
     expect(tokens["--surface"]).not.toBe(tokens["--page"]);
+  });
+
+  it("chooses whichever black or white text has greater accent contrast", () => {
+    expect(contrastText("#a85f16")).toBe("#ffffff");
+    expect(contrastText("#f3b85c")).toBe("#000000");
+    expect(paletteTokens(DEFAULT_PALETTE)["--accent-ink"]).toBe("#ffffff");
   });
 
   it("restores a saved custom palette and rejects malformed storage", () => {

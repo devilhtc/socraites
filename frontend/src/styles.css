@@ -11,7 +11,8 @@
   --body: #575149;
   --muted: #7b746a;
   --line: #d8cdbb;
-  --accent: #b5661a;
+  --accent: #a85f16;
+  --accent-ink: #ffffff;
   --accent-strong: #8e4711;
   --accent-soft: #f4d9b8;
   --teal: #187c70;
@@ -34,6 +35,7 @@
   --muted: #8f8b82;
   --line: #33322d;
   --accent: #f3b85c;
+  --accent-ink: #000000;
   --accent-strong: #ffd38c;
   --accent-soft: #49361d;
   --teal: #71d5c7;
@@ -214,9 +216,9 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 .tutor-composer textarea { min-height: 78px; max-height: 180px; resize: vertical; padding: 10px; border-radius: 9px; font-size: 12px; }
 .tutor-composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 7px; }
 .tutor-composer-actions small { color: var(--muted); font-size: 9px; }
-.tutor-composer-actions button { padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: #211609; cursor: pointer; font-size: 10px; font-weight: 800; }
+.tutor-composer-actions button { padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px; background: var(--accent); color: var(--accent-ink); cursor: pointer; font-size: 10px; font-weight: 800; }
 .tutor-composer-actions button:disabled { opacity: .45; cursor: not-allowed; }
-.tutor-launcher { position: fixed; z-index: 24; right: 18px; bottom: 22px; display: grid; width: 50px; height: 50px; place-items: center; border: 1px solid color-mix(in srgb,var(--accent) 70%,black); border-radius: 50%; background: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,.22); color: #211609; cursor: pointer; font-size: 20px; }
+.tutor-launcher { position: fixed; z-index: 24; right: 18px; bottom: 22px; display: grid; width: 50px; height: 50px; place-items: center; border: 1px solid color-mix(in srgb,var(--accent) 70%,black); border-radius: 50%; background: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,.22); color: var(--accent-ink); cursor: pointer; font-size: 20px; }
 
 .workspace { width: calc(100% - var(--left-panel-width) - var(--right-panel-width)); margin-left: var(--left-panel-width); margin-right: var(--right-panel-width); padding: 34px clamp(14px, 2.5vw, 38px) 90px; transition: width .18s ease, margin .18s ease; }
 .left-collapsed .sidebar { visibility: hidden; transform: translateX(-102%); }
@@ -247,7 +249,7 @@ button:focus-visible, textarea:focus-visible, input:focus-visible, summary:focus
 .lesson-surface { width: 100%; }
 
 .lesson-frame { display: block; width: 100%; height: 100%; min-height: 0; margin: 0; overflow: auto; border: 1px solid var(--line); border-radius: 0; background: var(--surface); box-shadow: var(--shadow); }
-.lesson-quiz-fab { position: fixed; z-index: 12; top: 28px; right: calc(var(--right-panel-width) + 28px); display: inline-flex; align-items: center; gap: 8px; padding: 11px 15px; border: 1px solid color-mix(in srgb,var(--accent) 72%,black); border-radius: 999px; background: var(--accent); box-shadow: 0 10px 28px rgba(0,0,0,.2); color: #211609; cursor: pointer; font-size: 11px; font-weight: 800; }
+.lesson-quiz-fab { position: fixed; z-index: 12; top: 28px; right: calc(var(--right-panel-width) + 28px); display: inline-flex; align-items: center; gap: 8px; padding: 11px 15px; border: 1px solid color-mix(in srgb,var(--accent) 72%,black); border-radius: 999px; background: var(--accent); box-shadow: 0 10px 28px rgba(0,0,0,.2); color: var(--accent-ink); cursor: pointer; font-size: 11px; font-weight: 800; }
 .lesson-quiz-fab:hover { transform: translateY(-1px); box-shadow: 0 13px 32px rgba(0,0,0,.24); }
 .right-collapsed .lesson-quiz-fab { right: 28px; }
 
@@ -326,7 +328,7 @@ textarea { width: 100%; resize: vertical; padding: 15px; border: 1px solid var(-
 .quiz-actions span { margin-top: 4px; color: var(--muted); font-size: 12px; }
 .quiz-action-buttons { display: flex; flex: none; gap: 9px; }
 .primary-button, .secondary-button { flex: none; padding: 12px 18px; border-radius: 11px; font-weight: 800; cursor: pointer; }
-.primary-button { border: 1px solid var(--accent); background: var(--accent); color: #211609; }
+.primary-button { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); }
 .primary-button:hover { background: var(--accent-strong); }
 .primary-button:disabled { opacity: .5; cursor: wait; }
 .secondary-button { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }

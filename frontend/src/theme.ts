@@ -36,6 +36,28 @@ function hex(channels: [number, number, number]): string {
   return `#${channels.map((channel) => Math.round(channel).toString(16).padStart(2, "0")).join("")}`;
 }
 
+function relativeLuminance(color: string): number {
+  const channels = rgb(color).map((channel) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  });
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+function contrastRatio(first: string, second: string): number {
+  const lighter = Math.max(relativeLuminance(first), relativeLuminance(second));
+  const darker = Math.min(relativeLuminance(first), relativeLuminance(second));
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+export function contrastText(background: string): "#000000" | "#ffffff" {
+  return contrastRatio(background, "#ffffff") > contrastRatio(background, "#000000")
+    ? "#ffffff"
+    : "#000000";
+}
+
 export function mixHex(base: string, overlay: string, overlayWeight: number): string {
   const baseChannels = rgb(base);
   const overlayChannels = rgb(overlay);
@@ -45,14 +67,7 @@ export function mixHex(base: string, overlay: string, overlayWeight: number): st
 }
 
 export function themeMode(background: string): ThemeMode {
-  const channels = rgb(background).map((channel) => {
-    const normalized = channel / 255;
-    return normalized <= 0.04045
-      ? normalized / 12.92
-      : ((normalized + 0.055) / 1.055) ** 2.4;
-  });
-  const luminance = channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
-  return luminance < 0.38 ? "dark" : "light";
+  return relativeLuminance(background) < 0.38 ? "dark" : "light";
 }
 
 export function paletteName(palette: Palette): string {
@@ -72,6 +87,7 @@ export function paletteTokens(palette: Palette): Record<string, string> {
     "--muted": mixHex(palette.background, dark ? "#ffffff" : "#000000", dark ? 0.58 : 0.53),
     "--line": mixHex(palette.background, dark ? "#ffffff" : "#000000", dark ? 0.14 : 0.14),
     "--accent": palette.accent,
+    "--accent-ink": contrastText(palette.accent),
     "--accent-strong": mixHex(palette.accent, dark ? "#ffffff" : "#000000", dark ? 0.24 : 0.22),
     "--accent-soft": mixHex(palette.background, palette.accent, dark ? 0.24 : 0.20),
     "--shadow": dark ? "0 18px 60px rgba(0,0,0,.3)" : "0 18px 50px rgba(31,38,45,.1)",
